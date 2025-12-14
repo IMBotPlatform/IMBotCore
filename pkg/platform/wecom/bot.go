@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 var (

@@ -3,7 +3,7 @@ package command
 import (
 	"testing"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 func TestStreamWriterIncremental(t *testing.T) {

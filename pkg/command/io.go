@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 // StreamWriter 实现 io.Writer 接口，将输出重定向到 StreamChunk 通道。

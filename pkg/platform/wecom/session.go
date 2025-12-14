@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 // Session 表示一次流式会话的上下文。

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 func TestCalcSignatureDeterministic(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 const commandLogSnippet = 256
@@ -101,14 +101,14 @@ func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore
 		}
 
 		execCtx := &ExecutionContext{
-			Update:    update,
-			StreamID:  streamID,
-			Store:     m.store,
-			llm:       m.llm,
-			responder: m.responder,
+			Update:     update,
+			StreamID:   streamID,
+			Store:      m.store,
+			llm:        m.llm,
+			responder:  m.responder,
 			sendSignal: sendSignal,
 		}
-		
+
 		convKey := execCtx.ConversationKey()
 		if m.store != nil {
 			if values, err := m.store.Load(convKey); err != nil {

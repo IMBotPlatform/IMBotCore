@@ -3,7 +3,7 @@ package wecom
 import (
 	"errors"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 // MessageAdapter 将企业微信 Message 映射为通用 Update。

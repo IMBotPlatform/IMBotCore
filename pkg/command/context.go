@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/IMBotPlatform/IMBotCore/botcore"
+	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
 // keyExecutionContext 是 context.Context 中存储 ExecutionContext 的键。
@@ -21,13 +21,13 @@ type ConversationStore interface {
 
 // ExecutionContext 为命令 handler 提供必要的环境信息。
 type ExecutionContext struct {
-	Update          botcore.Update
-	StreamID        string
-	Values          ContextValues
-	Store           ConversationStore
-	llm             LLMProvider
-	responder       botcore.ActiveResponder
-	
+	Update    botcore.Update
+	StreamID  string
+	Values    ContextValues
+	Store     ConversationStore
+	llm       LLMProvider
+	responder botcore.ActiveResponder
+
 	// sendSignal 是一个回调函数，允许 Command 立即向 Pipeline 发送信号
 	sendSignal func(chunk botcore.StreamChunk)
 }
