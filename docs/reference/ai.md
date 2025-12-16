@@ -30,7 +30,7 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/ai"
 
 
 <a name="AgentOptions"></a>
-## type AgentOptions
+## type [AgentOptions](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/agent.go#L20-L25>)
 
 AgentOptions 定义 Agent 运行时的选项
 
@@ -44,7 +44,7 @@ type AgentOptions struct {
 ```
 
 <a name="ChatOption"></a>
-## type ChatOption
+## type [ChatOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/service.go#L113>)
 
 ChatOption 是配置 ChatOptions 的函数。
 
@@ -53,7 +53,7 @@ type ChatOption func(*ChatOptions)
 ```
 
 <a name="WithModel"></a>
-### func WithModel
+### func [WithModel](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/service.go#L116>)
 
 ```go
 func WithModel(model string) ChatOption
@@ -62,7 +62,7 @@ func WithModel(model string) ChatOption
 WithModel 指定使用的模型。
 
 <a name="ChatOptions"></a>
-## type ChatOptions
+## type [ChatOptions](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/service.go#L108-L110>)
 
 ChatOptions 定义调用 Chat 时的配置。
 
@@ -73,7 +73,7 @@ type ChatOptions struct {
 ```
 
 <a name="Config"></a>
-## type Config
+## type [Config](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/config.go#L22-L25>)
 
 Config holds the global AI configuration.
 
@@ -85,7 +85,7 @@ type Config struct {
 ```
 
 <a name="LoadConfig"></a>
-### func LoadConfig
+### func [LoadConfig](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/config.go#L28>)
 
 ```go
 func LoadConfig(path string) (*Config, error)
@@ -94,7 +94,7 @@ func LoadConfig(path string) (*Config, error)
 LoadConfig reads and parses the configuration from a YAML file.
 
 <a name="FileStore"></a>
-## type FileStore
+## type [FileStore](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store_fs.go#L23-L26>)
 
 FileStore 实现了基于文件系统的 SessionStore \(JSONL 格式\)。 每个 Session 的历史记录存储在单独的文件中，每行一个 JSON 对象。
 
@@ -105,7 +105,7 @@ type FileStore struct {
 ```
 
 <a name="NewFileStore"></a>
-### func NewFileStore
+### func [NewFileStore](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store_fs.go#L30>)
 
 ```go
 func NewFileStore(baseDir string) (*FileStore, error)
@@ -114,7 +114,7 @@ func NewFileStore(baseDir string) (*FileStore, error)
 NewFileStore 创建一个新的 FileStore。 baseDir: 存储历史记录的目录路径。
 
 <a name="FileStore.AddAIMessage"></a>
-### func \(\*FileStore\) AddAIMessage
+### func \(\*FileStore\) [AddAIMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store_fs.go#L143>)
 
 ```go
 func (s *FileStore) AddAIMessage(ctx context.Context, sessionID, text string) error
@@ -123,7 +123,7 @@ func (s *FileStore) AddAIMessage(ctx context.Context, sessionID, text string) er
 AddAIMessage 添加 AI 消息（追加写入）
 
 <a name="FileStore.AddUserMessage"></a>
-### func \(\*FileStore\) AddUserMessage
+### func \(\*FileStore\) [AddUserMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store_fs.go#L136>)
 
 ```go
 func (s *FileStore) AddUserMessage(ctx context.Context, sessionID, text string) error
@@ -132,7 +132,7 @@ func (s *FileStore) AddUserMessage(ctx context.Context, sessionID, text string) 
 AddUserMessage 添加用户消息（追加写入）
 
 <a name="FileStore.ClearHistory"></a>
-### func \(\*FileStore\) ClearHistory
+### func \(\*FileStore\) [ClearHistory](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store_fs.go#L150>)
 
 ```go
 func (s *FileStore) ClearHistory(ctx context.Context, sessionID string) error
@@ -141,7 +141,7 @@ func (s *FileStore) ClearHistory(ctx context.Context, sessionID string) error
 ClearHistory 清空会话历史（删除文件）
 
 <a name="FileStore.GetHistory"></a>
-### func \(\*FileStore\) GetHistory
+### func \(\*FileStore\) [GetHistory](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store_fs.go#L80>)
 
 ```go
 func (s *FileStore) GetHistory(ctx context.Context, sessionID string) ([]llms.ChatMessage, error)
@@ -150,7 +150,7 @@ func (s *FileStore) GetHistory(ctx context.Context, sessionID string) ([]llms.Ch
 GetHistory 逐行读取文件获取历史记录
 
 <a name="ModelConfig"></a>
-## type ModelConfig
+## type [ModelConfig](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/config.go#L11-L19>)
 
 ModelConfig defines the configuration for a single LLM.
 
@@ -167,7 +167,7 @@ type ModelConfig struct {
 ```
 
 <a name="Service"></a>
-## type Service
+## type [Service](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/service.go#L17-L21>)
 
 Service 是 AI 逻辑的主要入口点。 它负责管理模型实例、会话状态以及与 LLM 的交互。
 
@@ -178,7 +178,7 @@ type Service struct {
 ```
 
 <a name="NewService"></a>
-### func NewService
+### func [NewService](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/service.go#L24>)
 
 ```go
 func NewService(config *Config, store SessionStore) *Service
@@ -187,7 +187,7 @@ func NewService(config *Config, store SessionStore) *Service
 NewService 创建一个新的 AI 服务实例。
 
 <a name="Service.Chat"></a>
-### func \(\*Service\) Chat
+### func \(\*Service\) [Chat](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/service.go#L148>)
 
 ```go
 func (s *Service) Chat(ctx context.Context, sessionID, prompt string, opts ...ChatOption) (<-chan string, error)
@@ -223,7 +223,7 @@ User Input (String)
 ```
 
 <a name="Service.RunAgent"></a>
-### func \(\*Service\) RunAgent
+### func \(\*Service\) [RunAgent](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/agent.go#L28>)
 
 ```go
 func (s *Service) RunAgent(ctx context.Context, sessionID, prompt string, opts AgentOptions) (string, error)
@@ -232,7 +232,7 @@ func (s *Service) RunAgent(ctx context.Context, sessionID, prompt string, opts A
 RunAgent 运行一个支持工具调用的 Agent 循环
 
 <a name="SessionStore"></a>
-## type SessionStore
+## type [SessionStore](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/store.go#L10-L22>)
 
 SessionStore manages the persistence of chat history.
 
@@ -253,7 +253,7 @@ type SessionStore interface {
 ```
 
 <a name="ToolDefinition"></a>
-## type ToolDefinition
+## type [ToolDefinition](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/ai/agent.go#L12-L17>)
 
 ToolDefinition 定义工具的接口
 
