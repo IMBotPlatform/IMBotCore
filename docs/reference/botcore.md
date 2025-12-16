@@ -42,7 +42,7 @@ var NoResponse = struct{}{}
 ```
 
 <a name="ActiveResponder"></a>
-## type [ActiveResponder](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L21-L25>)
+## type ActiveResponder
 
 ActiveResponder 定义主动发送消息的能力。 接口设计为支持通用和特定类型的发送，方便使用。
 
@@ -55,7 +55,7 @@ type ActiveResponder interface {
 ```
 
 <a name="Adapter"></a>
-## type [Adapter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/adapter.go#L4-L6>)
+## type Adapter
 
 Adapter 将平台原始消息映射为标准 Update。
 
@@ -66,7 +66,7 @@ type Adapter interface {
 ```
 
 <a name="AdapterFunc"></a>
-## type [AdapterFunc](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/adapter.go#L9>)
+## type AdapterFunc
 
 AdapterFunc 允许直接以函数形式实现 Adapter。
 
@@ -75,7 +75,7 @@ type AdapterFunc func(raw interface{}) (Update, error)
 ```
 
 <a name="AdapterFunc.Normalize"></a>
-### func \(AdapterFunc\) [Normalize](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/adapter.go#L12>)
+### func \(AdapterFunc\) Normalize
 
 ```go
 func (f AdapterFunc) Normalize(raw interface{}) (Update, error)
@@ -84,7 +84,7 @@ func (f AdapterFunc) Normalize(raw interface{}) (Update, error)
 Normalize 实现 Adapter 接口。
 
 <a name="Chain"></a>
-## type [Chain](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L21-L24>)
+## type Chain
 
 Chain 实现了一个基于责任链/路由表的 PipelineInvoker。 它按顺序检查路由，一旦匹配成功，就移交给对应的 Handler，并停止后续匹配。 如果所有路由都不匹配，且设置了 DefaultHandler，则调用 DefaultHandler。
 
@@ -95,7 +95,7 @@ type Chain struct {
 ```
 
 <a name="NewChain"></a>
-### func [NewChain](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L27>)
+### func NewChain
 
 ```go
 func NewChain(defaultHandler Handler) *Chain
@@ -104,7 +104,7 @@ func NewChain(defaultHandler Handler) *Chain
 NewChain 创建一个新的责任链路由器。
 
 <a name="Chain.AddRoute"></a>
-### func \(\*Chain\) [AddRoute](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L35>)
+### func \(\*Chain\) AddRoute
 
 ```go
 func (c *Chain) AddRoute(name string, matcher Matcher, handler Handler)
@@ -113,7 +113,7 @@ func (c *Chain) AddRoute(name string, matcher Matcher, handler Handler)
 AddRoute 添加一条路由规则。
 
 <a name="Chain.Trigger"></a>
-### func \(\*Chain\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L44>)
+### func \(\*Chain\) Trigger
 
 ```go
 func (c *Chain) Trigger(update Update, streamID string) <-chan StreamChunk
@@ -122,7 +122,7 @@ func (c *Chain) Trigger(update Update, streamID string) <-chan StreamChunk
 Trigger 实现 PipelineInvoker 接口。
 
 <a name="Emitter"></a>
-## type [Emitter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/emitter.go#L4-L6>)
+## type Emitter
 
 Emitter 将流水线产生的流式片段转换为平台可用的响应。
 
@@ -133,7 +133,7 @@ type Emitter interface {
 ```
 
 <a name="EmitterFunc"></a>
-## type [EmitterFunc](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/emitter.go#L9>)
+## type EmitterFunc
 
 EmitterFunc 允许直接用函数实现。
 
@@ -142,7 +142,7 @@ type EmitterFunc func(update Update, streamID string, chunk StreamChunk) (interf
 ```
 
 <a name="EmitterFunc.Encode"></a>
-### func \(EmitterFunc\) [Encode](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/emitter.go#L12>)
+### func \(EmitterFunc\) Encode
 
 ```go
 func (f EmitterFunc) Encode(update Update, streamID string, chunk StreamChunk) (interface{}, error)
@@ -151,7 +151,7 @@ func (f EmitterFunc) Encode(update Update, streamID string, chunk StreamChunk) (
 Encode 实现 Emitter 接口。
 
 <a name="Handler"></a>
-## type [Handler](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L9>)
+## type Handler
 
 Handler 定义路由处理逻辑。 实际上就是 PipelineInvoker，为了语义清晰起见定义别名。
 
@@ -160,7 +160,7 @@ type Handler PipelineInvoker
 ```
 
 <a name="Matcher"></a>
-## type [Matcher](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L5>)
+## type Matcher
 
 Matcher 定义路由匹配逻辑。 返回 true 表示该路由应该处理此 Update。
 
@@ -169,7 +169,7 @@ type Matcher func(update Update) bool
 ```
 
 <a name="MatchAny"></a>
-### func [MatchAny](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L73>)
+### func MatchAny
 
 ```go
 func MatchAny() Matcher
@@ -178,7 +178,7 @@ func MatchAny() Matcher
 MatchAny 返回一个总是匹配的 Matcher。
 
 <a name="MatchPrefix"></a>
-### func [MatchPrefix](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L66>)
+### func MatchPrefix
 
 ```go
 func MatchPrefix(prefix string) Matcher
@@ -187,7 +187,7 @@ func MatchPrefix(prefix string) Matcher
 MatchPrefix 返回一个匹配文本前缀的 Matcher。
 
 <a name="PipelineFunc"></a>
-## type [PipelineFunc](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L28>)
+## type PipelineFunc
 
 PipelineFunc 便于直接以函数充当 PipelineInvoker。
 
@@ -196,7 +196,7 @@ type PipelineFunc func(update Update, streamID string) <-chan StreamChunk
 ```
 
 <a name="PipelineFunc.Trigger"></a>
-### func \(PipelineFunc\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L31>)
+### func \(PipelineFunc\) Trigger
 
 ```go
 func (f PipelineFunc) Trigger(update Update, streamID string) <-chan StreamChunk
@@ -205,7 +205,7 @@ func (f PipelineFunc) Trigger(update Update, streamID string) <-chan StreamChunk
 Trigger 实现 PipelineInvoker 接口。
 
 <a name="PipelineInvoker"></a>
-## type [PipelineInvoker](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L15-L17>)
+## type PipelineInvoker
 
 PipelineInvoker 抽象命令/业务执行器。
 
@@ -216,7 +216,7 @@ type PipelineInvoker interface {
 ```
 
 <a name="Route"></a>
-## type [Route](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L12-L16>)
+## type Route
 
 Route 定义单条路由规则。
 
@@ -229,7 +229,7 @@ type Route struct {
 ```
 
 <a name="StreamChunk"></a>
-## type [StreamChunk](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L4-L8>)
+## type StreamChunk
 
 StreamChunk 描述流式输出片段。
 
@@ -242,7 +242,7 @@ type StreamChunk struct {
 ```
 
 <a name="Update"></a>
-## type [Update](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/update.go#L4-L12>)
+## type Update
 
 Update 描述任意聊天/机器人平台上的标准化事件。
 
@@ -259,7 +259,7 @@ type Update struct {
 ```
 
 <a name="Update.CloneMetadata"></a>
-### func \(Update\) [CloneMetadata](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/update.go#L15>)
+### func \(Update\) CloneMetadata
 
 ```go
 func (u Update) CloneMetadata() map[string]string

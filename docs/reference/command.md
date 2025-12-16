@@ -58,7 +58,7 @@ var (
 ```
 
 <a name="WithExecutionContext"></a>
-## func [WithExecutionContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L75>)
+## func WithExecutionContext
 
 ```go
 func WithExecutionContext(ctx context.Context, execCtx *ExecutionContext) context.Context
@@ -67,7 +67,7 @@ func WithExecutionContext(ctx context.Context, execCtx *ExecutionContext) contex
 WithExecutionContext 将 ExecutionContext 注入到标准 context.Context 中。
 
 <a name="ChatOption"></a>
-## type [ChatOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/llm.go#L11>)
+## type ChatOption
 
 ChatOption 是设置 ChatOptions 的函数类型。
 
@@ -76,7 +76,7 @@ type ChatOption func(*ChatOptions)
 ```
 
 <a name="WithModel"></a>
-### func [WithModel](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/llm.go#L14>)
+### func WithModel
 
 ```go
 func WithModel(name string) ChatOption
@@ -85,7 +85,7 @@ func WithModel(name string) ChatOption
 WithModel 指定本次调用使用的模型。
 
 <a name="ChatOptions"></a>
-## type [ChatOptions](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/llm.go#L6-L8>)
+## type ChatOptions
 
 ChatOptions 定义调用 LLM 时的可选参数。
 
@@ -96,7 +96,7 @@ type ChatOptions struct {
 ```
 
 <a name="CommandFactory"></a>
-## type [CommandFactory](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/command.go#L7>)
+## type CommandFactory
 
 CommandFactory 定义创建 Cobra 命令树的工厂函数类型。 在 HTTP 服务中，每个请求必须拥有独立的命令对象实例，以避免 Flag 解析的并发冲突。
 
@@ -105,7 +105,7 @@ type CommandFactory func() *cobra.Command
 ```
 
 <a name="ContextValues"></a>
-## type [ContextValues](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L14>)
+## type ContextValues
 
 ContextValues 存储命令执行过程中的上下文扩展字段。
 
@@ -114,7 +114,7 @@ type ContextValues map[string]string
 ```
 
 <a name="ConversationStore"></a>
-## type [ConversationStore](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L17-L20>)
+## type ConversationStore
 
 ConversationStore 定义上下文存取接口，便于替换实现。
 
@@ -126,7 +126,7 @@ type ConversationStore interface {
 ```
 
 <a name="ExecutionContext"></a>
-## type [ExecutionContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L23-L33>)
+## type ExecutionContext
 
 ExecutionContext 为命令 handler 提供必要的环境信息。
 
@@ -141,7 +141,7 @@ type ExecutionContext struct {
 ```
 
 <a name="FromContext"></a>
-### func [FromContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L80>)
+### func FromContext
 
 ```go
 func FromContext(ctx context.Context) *ExecutionContext
@@ -150,7 +150,7 @@ func FromContext(ctx context.Context) *ExecutionContext
 FromContext 从标准 context.Context 中提取 ExecutionContext。
 
 <a name="ExecutionContext.ConversationKey"></a>
-### func \(\*ExecutionContext\) [ConversationKey](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L67>)
+### func \(\*ExecutionContext\) ConversationKey
 
 ```go
 func (ctx *ExecutionContext) ConversationKey() string
@@ -159,7 +159,7 @@ func (ctx *ExecutionContext) ConversationKey() string
 ConversationKey 返回当前上下文在存储中的唯一 key。
 
 <a name="ExecutionContext.LLM"></a>
-### func \(\*ExecutionContext\) [LLM](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L57>)
+### func \(\*ExecutionContext\) LLM
 
 ```go
 func (ctx *ExecutionContext) LLM() LLMProvider
@@ -168,7 +168,7 @@ func (ctx *ExecutionContext) LLM() LLMProvider
 LLM 返回 AI 服务提供者。
 
 <a name="ExecutionContext.Responder"></a>
-### func \(\*ExecutionContext\) [Responder](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L62>)
+### func \(\*ExecutionContext\) Responder
 
 ```go
 func (ctx *ExecutionContext) Responder() botcore.ActiveResponder
@@ -177,7 +177,7 @@ func (ctx *ExecutionContext) Responder() botcore.ActiveResponder
 Responder 返回主动消息发送器。
 
 <a name="ExecutionContext.SetNoResponse"></a>
-### func \(\*ExecutionContext\) [SetNoResponse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L47>)
+### func \(\*ExecutionContext\) SetNoResponse
 
 ```go
 func (ctx *ExecutionContext) SetNoResponse()
@@ -186,7 +186,7 @@ func (ctx *ExecutionContext) SetNoResponse()
 SetNoResponse 立即发送静默信号。 Bot 层收到此信号后将直接返回 HTTP 200 OK 空包。
 
 <a name="ExecutionContext.SetResponsePayload"></a>
-### func \(\*ExecutionContext\) [SetResponsePayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L36>)
+### func \(\*ExecutionContext\) SetResponsePayload
 
 ```go
 func (ctx *ExecutionContext) SetResponsePayload(payload interface{})
@@ -195,7 +195,7 @@ func (ctx *ExecutionContext) SetResponsePayload(payload interface{})
 SetResponsePayload 立即发送非流式响应对象。
 
 <a name="LLMProvider"></a>
-## type [LLMProvider](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/llm.go#L22-L28>)
+## type LLMProvider
 
 LLMProvider 定义 Command 层依赖的 AI 能力接口。 这使得 Command 可以调用 AI 服务，而无需直接依赖 pkg/ai 包。
 
@@ -210,7 +210,7 @@ type LLMProvider interface {
 ```
 
 <a name="Manager"></a>
-## type [Manager](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L16-L23>)
+## type Manager
 
 Manager 实现 PipelineInvoker，负责串联解析、构建 Cobra 命令树并执行。
 
@@ -221,7 +221,7 @@ type Manager struct {
 ```
 
 <a name="NewManager"></a>
-### func [NewManager](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L50>)
+### func NewManager
 
 ```go
 func NewManager(factory CommandFactory, store ConversationStore, opts ...ManagerOption) *Manager
@@ -230,7 +230,7 @@ func NewManager(factory CommandFactory, store ConversationStore, opts ...Manager
 NewManager 绑定命令工厂与存储，返回实现 PipelineInvoker 的管理器。
 
 <a name="Manager.Trigger"></a>
-### func \(\*Manager\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L63>)
+### func \(\*Manager\) Trigger
 
 ```go
 func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore.StreamChunk
@@ -239,7 +239,7 @@ func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore
 Trigger 满足 botcore.PipelineInvoker，为每个请求构建独立的命令树并执行。
 
 <a name="ManagerOption"></a>
-## type [ManagerOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L26>)
+## type ManagerOption
 
 ManagerOption 自定义 Manager 行为。
 
@@ -248,7 +248,7 @@ type ManagerOption func(*Manager)
 ```
 
 <a name="WithLLM"></a>
-### func [WithLLM](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L36>)
+### func WithLLM
 
 ```go
 func WithLLM(llm LLMProvider) ManagerOption
@@ -257,7 +257,7 @@ func WithLLM(llm LLMProvider) ManagerOption
 WithLLM 注入 AI 能力提供者。
 
 <a name="WithLogger"></a>
-### func [WithLogger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L29>)
+### func WithLogger
 
 ```go
 func WithLogger(l *log.Logger) ManagerOption
@@ -266,7 +266,7 @@ func WithLogger(l *log.Logger) ManagerOption
 WithLogger 注入自定义日志记录器。
 
 <a name="WithResponder"></a>
-### func [WithResponder](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L43>)
+### func WithResponder
 
 ```go
 func WithResponder(r botcore.ActiveResponder) ManagerOption
@@ -275,7 +275,7 @@ func WithResponder(r botcore.ActiveResponder) ManagerOption
 WithResponder 注入主动消息发送器。
 
 <a name="MemoryStore"></a>
-## type [MemoryStore](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/store.go#L7-L10>)
+## type MemoryStore
 
 MemoryStore 提供简单的基于内存的上下文存储实现。 仅用于命令执行期的上下文键值（非聊天历史）；进程重启即丢失。
 
@@ -286,7 +286,7 @@ type MemoryStore struct {
 ```
 
 <a name="NewMemoryStore"></a>
-### func [NewMemoryStore](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/store.go#L13>)
+### func NewMemoryStore
 
 ```go
 func NewMemoryStore() *MemoryStore
@@ -295,7 +295,7 @@ func NewMemoryStore() *MemoryStore
 NewMemoryStore 创建内存存储实例。
 
 <a name="MemoryStore.Load"></a>
-### func \(\*MemoryStore\) [Load](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/store.go#L18>)
+### func \(\*MemoryStore\) Load
 
 ```go
 func (s *MemoryStore) Load(key string) (ContextValues, error)
@@ -304,7 +304,7 @@ func (s *MemoryStore) Load(key string) (ContextValues, error)
 Load 返回指定 key 的上下文副本。
 
 <a name="MemoryStore.Save"></a>
-### func \(\*MemoryStore\) [Save](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/store.go#L31>)
+### func \(\*MemoryStore\) Save
 
 ```go
 func (s *MemoryStore) Save(key string, values ContextValues) error
@@ -313,7 +313,7 @@ func (s *MemoryStore) Save(key string, values ContextValues) error
 Save 合并并存储上下文增量。
 
 <a name="ParseResult"></a>
-## type [ParseResult](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L8-L13>)
+## type ParseResult
 
 ParseResult 承载文本命令解析后的结构化结果。
 
@@ -327,7 +327,7 @@ type ParseResult struct {
 ```
 
 <a name="Parser"></a>
-## type [Parser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L16-L18>)
+## type Parser
 
 Parser 解析企业微信文本内容，判定是否命令并拆分 token。
 
@@ -338,7 +338,7 @@ type Parser struct {
 ```
 
 <a name="NewParser"></a>
-### func [NewParser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L21>)
+### func NewParser
 
 ```go
 func NewParser() Parser
@@ -347,7 +347,7 @@ func NewParser() Parser
 NewParser 创建带默认前缀的解析器。
 
 <a name="Parser.Parse"></a>
-### func \(Parser\) [Parse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L26>)
+### func \(Parser\) Parse
 
 ```go
 func (p Parser) Parse(text string) ParseResult
@@ -356,7 +356,7 @@ func (p Parser) Parse(text string) ParseResult
 Parse 将文本拆解为命令 token。规则参考 Telegram Message.IsCommand。
 
 <a name="StreamWriter"></a>
-## type [StreamWriter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/io.go#L9-L11>)
+## type StreamWriter
 
 StreamWriter 实现 io.Writer 接口，将输出重定向到 StreamChunk 通道。 这允许 Cobra 命令像操作 stdout 一样直接打印，而结果会被流式传输给用户。
 
@@ -367,7 +367,7 @@ type StreamWriter struct {
 ```
 
 <a name="NewStreamWriter"></a>
-### func [NewStreamWriter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/io.go#L14>)
+### func NewStreamWriter
 
 ```go
 func NewStreamWriter(ch chan<- botcore.StreamChunk) *StreamWriter
@@ -376,7 +376,7 @@ func NewStreamWriter(ch chan<- botcore.StreamChunk) *StreamWriter
 NewStreamWriter 创建一个新的 StreamWriter。
 
 <a name="StreamWriter.Write"></a>
-### func \(\*StreamWriter\) [Write](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/io.go#L19>)
+### func \(\*StreamWriter\) Write
 
 ```go
 func (w *StreamWriter) Write(p []byte) (n int, err error)
