@@ -2,6 +2,7 @@ package wecom
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
@@ -20,6 +21,8 @@ func (MessageAdapter) Normalize(raw interface{}) (botcore.Update, error) {
 	if msg.Text != nil {
 		text = msg.Text.Content
 	}
+	// 关键步骤：若文本以 @ 开头，剥离前置的 @ 提及，避免命令路由失败。
+	text = stripLeadingMentions(text)
 
 	meta := map[string]string{
 		"platform":     "wecom",
@@ -60,6 +63,33 @@ func (MessageAdapter) Normalize(raw interface{}) (botcore.Update, error) {
 		Raw:      msg,
 		Metadata: meta,
 	}, nil
+}
+
+// stripLeadingMentions 剥离文本中前置的 @ 提及 token。
+// 入参：text 为原始文本内容。
+// 返回：移除前置 @ 提及后的文本；若无可剥离内容，则返回原文本。
+func stripLeadingMentions(text string) string {
+	trimmed := strings.TrimSpace(text)
+	if trimmed == "" {
+		return text
+	}
+	if !strings.HasPrefix(trimmed, "@") {
+		return text
+	}
+
+	fields := strings.Fields(trimmed)
+	if len(fields) == 0 {
+		return text
+	}
+
+	i := 0
+	for i < len(fields) && strings.HasPrefix(fields[i], "@") {
+		i++
+	}
+	if i >= len(fields) {
+		return ""
+	}
+	return strings.Join(fields[i:], " ")
 }
 
 // StreamEmitter 将 StreamChunk 转换为企业微信 StreamReply。

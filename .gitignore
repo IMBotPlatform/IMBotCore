@@ -1,1 +1,15 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test binaries
+*.test
+
+# Go coverage output
+*.out
+
+# Dependency directories
 vendor/
