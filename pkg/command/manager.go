@@ -18,7 +18,6 @@ type Manager struct {
 	parser    Parser
 	store     ConversationStore
 	logger    *log.Logger
-	llm       LLMProvider // AI 能力提供者
 	responder botcore.ActiveResponder
 }
 
@@ -29,13 +28,6 @@ type ManagerOption func(*Manager)
 func WithLogger(l *log.Logger) ManagerOption {
 	return func(m *Manager) {
 		m.logger = l
-	}
-}
-
-// WithLLM 注入 AI 能力提供者。
-func WithLLM(llm LLMProvider) ManagerOption {
-	return func(m *Manager) {
-		m.llm = llm
 	}
 }
 
@@ -104,7 +96,6 @@ func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore
 			Update:     update,
 			StreamID:   streamID,
 			Store:      m.store,
-			llm:        m.llm,
 			responder:  m.responder,
 			sendSignal: sendSignal,
 		}

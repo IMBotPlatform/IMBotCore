@@ -29,8 +29,8 @@ Enterprise WeCom (POST encrypted)
     |                          |
 Yes v                          v No
 CommandManager            AIHandler
-  -> Cobra cmds             -> ai.Service.Chat (stream)
-  -> Responder              -> FileStore (history)
+  -> Cobra cmds             -> 应用侧 LLM（流式）
+  -> Responder              ->（应用侧可选存储）
           \                    /
            \                  /
             \                /
@@ -45,7 +45,7 @@ CommandManager            AIHandler
 ## 加解密与安全要点
 - 加解密：`wecom.NewCrypt` 使用 `WECOM_TOKEN`、`WECOM_ENCODING_AES_KEY`、`WECOM_CORP_ID`。
 - 企业微信要求 5s 内响应：流式输出首包由 SessionManager 保障，刷新超时由 `WECOM_REFRESH_TIMEOUT` 控制。
-- 历史落盘：AI 回复结束后写入 `BOT_HISTORY_DIR/<session>.jsonl`，格式为 JSONL，错误会打印告警但不影响当前响应。
+- 历史落盘：IMBotCore 不内置历史存储，是否落盘由应用侧自行决定。
 
 ## 指令与回调路径说明
 - 回调 URL 固定 `/callback/command`，企业微信后台需与上述 ENV 保持一致。
@@ -55,5 +55,4 @@ CommandManager            AIHandler
 - 平台接入（企业微信案例）：`pkg/platform/wecom/bot.go`, `pkg/platform/wecom/adapter.go`, `pkg/platform/wecom/session.go`
 - 路由/链：`pkg/botcore/router.go`
 - 命令系统：`pkg/command/manager.go`, `pkg/command/parser.go`, `pkg/command/context.go`
-- AI 流式：`pkg/ai/service.go`
-- 历史存储：`pkg/ai/store_fs.go`
+- AI 流式：应用侧使用 langchaingo 或其他 SDK 实现

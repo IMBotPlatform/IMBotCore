@@ -120,7 +120,7 @@ var (
 ```
 
 <a name="ActionItem"></a>
-## type ActionItem
+## type [ActionItem](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L42-L45>)
 
 ActionItem 操作列表项
 
@@ -132,7 +132,7 @@ type ActionItem struct {
 ```
 
 <a name="ActionMenu"></a>
-## type ActionMenu
+## type [ActionMenu](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L36-L39>)
 
 ActionMenu 卡片右上角更多操作按钮
 
@@ -144,7 +144,7 @@ type ActionMenu struct {
 ```
 
 <a name="AttachmentPayload"></a>
-## type AttachmentPayload
+## type [AttachmentPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L127-L134>)
 
 AttachmentPayload 智能应用回调附件
 
@@ -160,7 +160,7 @@ type AttachmentPayload struct {
 ```
 
 <a name="Bot"></a>
-## type Bot
+## type [Bot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L24-L33>)
 
 Bot 集成企业微信回调处理与流式响应逻辑。 Fields:
 
@@ -182,7 +182,7 @@ type Bot struct {
 ```
 
 <a name="NewBot"></a>
-### func NewBot
+### func [NewBot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L62>)
 
 ```go
 func NewBot(crypto *Crypt, sessionTTL, timeout time.Duration, pipeline botcore.PipelineInvoker, opts ...BotOption) (*Bot, error)
@@ -201,7 +201,7 @@ Returns:
 - error: 当 crypto 为空时返回错误
 
 <a name="Bot.Cleanup"></a>
-### func \(\*Bot\) Cleanup
+### func \(\*Bot\) [Cleanup](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L474>)
 
 ```go
 func (b *Bot) Cleanup()
@@ -210,7 +210,7 @@ func (b *Bot) Cleanup()
 Cleanup 清理过期会话，防止 Session 过度累积。
 
 <a name="Bot.Initial"></a>
-### func \(\*Bot\) Initial
+### func \(\*Bot\) [Initial](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L240>)
 
 ```go
 func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse, error)
@@ -238,7 +238,7 @@ Returns:
 ```
 
 <a name="Bot.PushStreamChunk"></a>
-### func \(\*Bot\) PushStreamChunk
+### func \(\*Bot\) [PushStreamChunk](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L460>)
 
 ```go
 func (b *Bot) PushStreamChunk(msgID, content string, isFinal bool) bool
@@ -247,7 +247,7 @@ func (b *Bot) PushStreamChunk(msgID, content string, isFinal bool) bool
 PushStreamChunk 兼容旧接口，便于在流水线外部直接推送片段。
 
 <a name="Bot.Refresh"></a>
-### func \(\*Bot\) Refresh
+### func \(\*Bot\) [Refresh](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L353>)
 
 ```go
 func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse, error)
@@ -299,7 +299,7 @@ v
 \[加密并返回\]
 
 <a name="Bot.ServeHTTP"></a>
-### func \(\*Bot\) ServeHTTP
+### func \(\*Bot\) [ServeHTTP](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L92>)
 
 ```go
 func (b *Bot) ServeHTTP(w http.ResponseWriter, r *http.Request)
@@ -311,7 +311,7 @@ ServeHTTP 实现 http.Handler 接口，根据请求方法转发至不同处理�
 - r: \*http.Request，请求上下文
 
 <a name="Bot.SetFinalMessage"></a>
-### func \(\*Bot\) SetFinalMessage
+### func \(\*Bot\) [SetFinalMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L468>)
 
 ```go
 func (b *Bot) SetFinalMessage(msgID, content string)
@@ -323,7 +323,7 @@ SetFinalMessage 在非流式场景下缓存最终结果以备刷新，找不到�
 - content: 业务最终结果
 
 <a name="BotOption"></a>
-## type BotOption
+## type [BotOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L36>)
 
 BotOption 用于定制 Bot 行为。
 
@@ -332,7 +332,7 @@ type BotOption func(*Bot)
 ```
 
 <a name="WithAdapter"></a>
-### func WithAdapter
+### func [WithAdapter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L39>)
 
 ```go
 func WithAdapter(adapter botcore.Adapter) BotOption
@@ -341,7 +341,7 @@ func WithAdapter(adapter botcore.Adapter) BotOption
 WithAdapter 自定义消息标准化适配器。
 
 <a name="WithEmitter"></a>
-### func WithEmitter
+### func [WithEmitter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/bot.go#L46>)
 
 ```go
 func WithEmitter(emitter botcore.Emitter) BotOption
@@ -350,7 +350,7 @@ func WithEmitter(emitter botcore.Emitter) BotOption
 WithEmitter 覆盖默认的流式响应构造器。
 
 <a name="Button"></a>
-## type Button
+## type [Button](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L120-L124>)
 
 Button 按钮列表
 
@@ -363,7 +363,7 @@ type Button struct {
 ```
 
 <a name="CardAction"></a>
-## type CardAction
+## type [CardAction](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L95-L100>)
 
 CardAction 整体卡片的点击跳转事件
 
@@ -377,7 +377,7 @@ type CardAction struct {
 ```
 
 <a name="CardImage"></a>
-## type CardImage
+## type [CardImage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L103-L106>)
 
 CardImage 图片样式
 
@@ -389,7 +389,7 @@ type CardImage struct {
 ```
 
 <a name="Checkbox"></a>
-## type Checkbox
+## type [Checkbox](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L142-L147>)
 
 Checkbox 选择题样式
 
@@ -403,7 +403,7 @@ type Checkbox struct {
 ```
 
 <a name="CheckboxOption"></a>
-## type CheckboxOption
+## type [CheckboxOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L150-L154>)
 
 CheckboxOption 选择题选项
 
@@ -416,7 +416,7 @@ type CheckboxOption struct {
 ```
 
 <a name="Client"></a>
-## type Client
+## type [Client](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L13-L15>)
 
 Client 封装企业微信主动回复功能。
 
@@ -427,7 +427,7 @@ type Client struct {
 ```
 
 <a name="NewClient"></a>
-### func NewClient
+### func [NewClient](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L18>)
 
 ```go
 func NewClient() *Client
@@ -436,7 +436,7 @@ func NewClient() *Client
 NewClient 创建一个新的 Client。
 
 <a name="Client.Send"></a>
-### func \(\*Client\) Send
+### func \(\*Client\) [Send](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L29>)
 
 ```go
 func (c *Client) Send(responseURL string, msg interface{}) error
@@ -445,7 +445,7 @@ func (c *Client) Send(responseURL string, msg interface{}) error
 Send 向指定的 response\_url 发送主动回复消息。 对应文档：7\_加解密说明.md \- 如何主动回复消息 注意：response\_url 有效期为 1 小时，且每个 url 仅可调用一次。
 
 <a name="Client.SendMarkdown"></a>
-### func \(\*Client\) SendMarkdown
+### func \(\*Client\) [SendMarkdown](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L74>)
 
 ```go
 func (c *Client) SendMarkdown(responseURL, content string) error
@@ -454,7 +454,7 @@ func (c *Client) SendMarkdown(responseURL, content string) error
 SendMarkdown 发送 Markdown 消息
 
 <a name="Client.SendTemplateCard"></a>
-### func \(\*Client\) SendTemplateCard
+### func \(\*Client\) [SendTemplateCard](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L85>)
 
 ```go
 func (c *Client) SendTemplateCard(responseURL string, card interface{}) error
@@ -463,7 +463,7 @@ func (c *Client) SendTemplateCard(responseURL string, card interface{}) error
 SendTemplateCard 发送模板卡片消息
 
 <a name="Crypt"></a>
-## type Crypt
+## type [Crypt](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/crypt.go#L31-L35>)
 
 Crypt 封装企业微信的加解密逻辑。
 
@@ -474,7 +474,7 @@ type Crypt struct {
 ```
 
 <a name="NewCrypt"></a>
-### func NewCrypt
+### func [NewCrypt](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/crypt.go#L46>)
 
 ```go
 func NewCrypt(token, encodingAESKey, corpID string) (*Crypt, error)
@@ -492,7 +492,7 @@ Returns:
 - error: 当 EncodingAESKey 无法解码或长度不合法时返回错误
 
 <a name="Crypt.DecryptMessage"></a>
-### func \(\*Crypt\) DecryptMessage
+### func \(\*Crypt\) [DecryptMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/crypt.go#L134>)
 
 ```go
 func (c *Crypt) DecryptMessage(msgSignature, timestamp, nonce string, req EncryptedRequest) (*Message, error)
@@ -531,7 +531,7 @@ Returns:
 ```
 
 <a name="Crypt.EncryptResponse"></a>
-### func \(\*Crypt\) EncryptResponse
+### func \(\*Crypt\) [EncryptResponse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/crypt.go#L175>)
 
 ```go
 func (c *Crypt) EncryptResponse(payload interface{}, timestamp, nonce string) (EncryptedResponse, error)
@@ -555,7 +555,7 @@ Returns:
 ```
 
 <a name="Crypt.VerifyURL"></a>
-### func \(\*Crypt\) VerifyURL
+### func \(\*Crypt\) [VerifyURL](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/crypt.go#L84>)
 
 ```go
 func (c *Crypt) VerifyURL(msgSignature, timestamp, nonce, echoStr string) (string, error)
@@ -564,7 +564,7 @@ func (c *Crypt) VerifyURL(msgSignature, timestamp, nonce, echoStr string) (strin
 
 
 <a name="EmphasisContent"></a>
-## type EmphasisContent
+## type [EmphasisContent](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L54-L57>)
 
 EmphasisContent 关键数据样式
 
@@ -576,7 +576,7 @@ type EmphasisContent struct {
 ```
 
 <a name="EncryptedRequest"></a>
-## type EncryptedRequest
+## type [EncryptedRequest](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L137-L139>)
 
 EncryptedRequest 对应企业微信 POST 回调中的加密请求格式。
 
@@ -587,7 +587,7 @@ type EncryptedRequest struct {
 ```
 
 <a name="EncryptedResponse"></a>
-## type EncryptedResponse
+## type [EncryptedResponse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L142-L147>)
 
 EncryptedResponse 表示向企业微信回复的加密数据包。
 
@@ -601,7 +601,7 @@ type EncryptedResponse struct {
 ```
 
 <a name="EventPayload"></a>
-## type EventPayload
+## type [EventPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L87-L92>)
 
 EventPayload 事件结构体
 
@@ -615,7 +615,7 @@ type EventPayload struct {
 ```
 
 <a name="FeedbackEvent"></a>
-## type FeedbackEvent
+## type [FeedbackEvent](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L119-L124>)
 
 FeedbackEvent 用户反馈事件
 
@@ -629,7 +629,7 @@ type FeedbackEvent struct {
 ```
 
 <a name="FeedbackInfo"></a>
-## type FeedbackInfo
+## type [FeedbackInfo](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L163-L165>)
 
 FeedbackInfo 反馈信息 \(用于主动回复\)
 
@@ -640,7 +640,7 @@ type FeedbackInfo struct {
 ```
 
 <a name="FilePayload"></a>
-## type FilePayload
+## type [FilePayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L52-L54>)
 
 FilePayload 为文件消息内容。
 
@@ -651,7 +651,7 @@ type FilePayload struct {
 ```
 
 <a name="HorizontalContent"></a>
-## type HorizontalContent
+## type [HorizontalContent](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L70-L76>)
 
 HorizontalContent 二级标题\+文本列表
 
@@ -666,7 +666,7 @@ type HorizontalContent struct {
 ```
 
 <a name="ImagePayload"></a>
-## type ImagePayload
+## type [ImagePayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L40-L44>)
 
 ImagePayload 为图片消息内容。
 
@@ -679,7 +679,7 @@ type ImagePayload struct {
 ```
 
 <a name="ImageTextArea"></a>
-## type ImageTextArea
+## type [ImageTextArea](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L109-L117>)
 
 ImageTextArea 左图右文样式
 
@@ -696,7 +696,7 @@ type ImageTextArea struct {
 ```
 
 <a name="JumpAction"></a>
-## type JumpAction
+## type [JumpAction](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L85-L92>)
 
 JumpAction 跳转指引样式的列表
 
@@ -712,7 +712,7 @@ type JumpAction struct {
 ```
 
 <a name="MainTitle"></a>
-## type MainTitle
+## type [MainTitle](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L48-L51>)
 
 MainTitle 模版卡片的主要内容
 
@@ -724,7 +724,7 @@ type MainTitle struct {
 ```
 
 <a name="MarkdownMessage"></a>
-## type MarkdownMessage
+## type [MarkdownMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L63-L66>)
 
 MarkdownMessage 主动回复 Markdown 消息结构
 
@@ -736,7 +736,7 @@ type MarkdownMessage struct {
 ```
 
 <a name="MarkdownPayload"></a>
-## type MarkdownPayload
+## type [MarkdownPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/client.go#L68-L71>)
 
 
 
@@ -748,7 +748,7 @@ type MarkdownPayload struct {
 ```
 
 <a name="Message"></a>
-## type Message
+## type [Message](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L8-L26>)
 
 Message 表示企业微信回调的通用消息结构。
 
@@ -775,7 +775,7 @@ type Message struct {
 ```
 
 <a name="ParseMessage"></a>
-### func ParseMessage
+### func [ParseMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L190>)
 
 ```go
 func ParseMessage(data []byte) (*Message, error)
@@ -784,7 +784,7 @@ func ParseMessage(data []byte) (*Message, error)
 ParseMessage 将明文 JSON 数据解析为 Message。
 
 <a name="MessageAdapter"></a>
-## type MessageAdapter
+## type [MessageAdapter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L11>)
 
 MessageAdapter 将企业微信 Message 映射为通用 Update。
 
@@ -793,7 +793,7 @@ type MessageAdapter struct{}
 ```
 
 <a name="MessageAdapter.Normalize"></a>
-### func \(MessageAdapter\) Normalize
+### func \(MessageAdapter\) [Normalize](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L14>)
 
 ```go
 func (MessageAdapter) Normalize(raw interface{}) (botcore.Update, error)
@@ -802,7 +802,7 @@ func (MessageAdapter) Normalize(raw interface{}) (botcore.Update, error)
 Normalize 实现 botcore.Adapter。
 
 <a name="MessageSender"></a>
-## type MessageSender
+## type [MessageSender](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L29-L32>)
 
 MessageSender 描述消息的触发者。
 
@@ -814,7 +814,7 @@ type MessageSender struct {
 ```
 
 <a name="MixedItem"></a>
-## type MixedItem
+## type [MixedItem](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L62-L66>)
 
 MixedItem 为图文混排中的单个子消息。
 
@@ -827,7 +827,7 @@ type MixedItem struct {
 ```
 
 <a name="MixedPayload"></a>
-## type MixedPayload
+## type [MixedPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L57-L59>)
 
 MixedPayload 表示图文混排消息。
 
@@ -838,7 +838,7 @@ type MixedPayload struct {
 ```
 
 <a name="OptionIDs"></a>
-## type OptionIDs
+## type [OptionIDs](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L114-L116>)
 
 OptionIDs 选项ID列表
 
@@ -849,7 +849,7 @@ type OptionIDs struct {
 ```
 
 <a name="QuoteArea"></a>
-## type QuoteArea
+## type [QuoteArea](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L60-L67>)
 
 QuoteArea 引用文献样式
 
@@ -865,7 +865,7 @@ type QuoteArea struct {
 ```
 
 <a name="QuotePayload"></a>
-## type QuotePayload
+## type [QuotePayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L77-L84>)
 
 QuotePayload 引用消息内容。
 
@@ -881,7 +881,7 @@ type QuotePayload struct {
 ```
 
 <a name="SelectOption"></a>
-## type SelectOption
+## type [SelectOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L136-L139>)
 
 SelectOption 选择器选项
 
@@ -893,7 +893,7 @@ type SelectOption struct {
 ```
 
 <a name="SelectedItem"></a>
-## type SelectedItem
+## type [SelectedItem](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L108-L111>)
 
 SelectedItem 单个选择项结果
 
@@ -905,7 +905,7 @@ type SelectedItem struct {
 ```
 
 <a name="SelectedItems"></a>
-## type SelectedItems
+## type [SelectedItems](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L103-L105>)
 
 SelectedItems 模板卡片选择结果容器
 
@@ -916,7 +916,7 @@ type SelectedItems struct {
 ```
 
 <a name="SelectionItem"></a>
-## type SelectionItem
+## type [SelectionItem](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L127-L133>)
 
 SelectionItem 下拉式的选择器
 
@@ -931,7 +931,7 @@ type SelectionItem struct {
 ```
 
 <a name="Session"></a>
-## type Session
+## type [Session](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L14-L27>)
 
 Session 表示一次流式会话的上下文。
 
@@ -953,7 +953,7 @@ type Session struct {
 ```
 
 <a name="SessionManager"></a>
-## type SessionManager
+## type [SessionManager](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L30-L35>)
 
 SessionManager 管理流式会话的生命周期。
 
@@ -964,7 +964,7 @@ type SessionManager struct {
 ```
 
 <a name="NewSessionManager"></a>
-### func NewSessionManager
+### func [NewSessionManager](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L43>)
 
 ```go
 func NewSessionManager(ttl time.Duration) *SessionManager
@@ -979,7 +979,7 @@ Returns:
 - \*SessionManager: 管理会话的实例
 
 <a name="SessionManager.Accumulate"></a>
-### func \(\*SessionManager\) Accumulate
+### func \(\*SessionManager\) [Accumulate](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L124>)
 
 ```go
 func (m *SessionManager) Accumulate(streamID, content string) bool
@@ -988,7 +988,7 @@ func (m *SessionManager) Accumulate(streamID, content string) bool
 Accumulate 仅累积内容到会话状态，不发布到队列。 适用于 Initial 阶段已经直接返回了内容，但需要同步会话状态的场景。
 
 <a name="SessionManager.Cleanup"></a>
-### func \(\*SessionManager\) Cleanup
+### func \(\*SessionManager\) [Cleanup](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L311>)
 
 ```go
 func (m *SessionManager) Cleanup()
@@ -1007,7 +1007,7 @@ Cleanup 清理过期的会话。 流程图：
 ```
 
 <a name="SessionManager.Consume"></a>
-### func \(\*SessionManager\) Consume
+### func \(\*SessionManager\) [Consume](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L186>)
 
 ```go
 func (m *SessionManager) Consume(streamID string, timeout time.Duration) *botcore.StreamChunk
@@ -1016,7 +1016,7 @@ func (m *SessionManager) Consume(streamID string, timeout time.Duration) *botcor
 Consume 从会话队列中读取一个片段，超时返回 nil。 为了满足企业微信“content 为最新完整内容”的语义，会排干队列并返回最新的全量快照。
 
 <a name="SessionManager.CreateOrGet"></a>
-### func \(\*SessionManager\) CreateOrGet
+### func \(\*SessionManager\) [CreateOrGet](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L87>)
 
 ```go
 func (m *SessionManager) CreateOrGet(msg *Message) (*Session, bool)
@@ -1062,7 +1062,7 @@ Returns:
 ```
 
 <a name="SessionManager.GetStreamIDByMsg"></a>
-### func \(\*SessionManager\) GetStreamIDByMsg
+### func \(\*SessionManager\) [GetStreamIDByMsg](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L288>)
 
 ```go
 func (m *SessionManager) GetStreamIDByMsg(msgID string) (string, bool)
@@ -1078,7 +1078,7 @@ Returns:
 - bool: 是否存在对应会话
 
 <a name="SessionManager.GetUpdate"></a>
-### func \(\*SessionManager\) GetUpdate
+### func \(\*SessionManager\) [GetUpdate](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L271>)
 
 ```go
 func (m *SessionManager) GetUpdate(streamID string) botcore.Update
@@ -1087,7 +1087,7 @@ func (m *SessionManager) GetUpdate(streamID string) botcore.Update
 GetUpdate 返回指定会话的标准化事件副本。
 
 <a name="SessionManager.MarkFinished"></a>
-### func \(\*SessionManager\) MarkFinished
+### func \(\*SessionManager\) [MarkFinished](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L249>)
 
 ```go
 func (m *SessionManager) MarkFinished(streamID string)
@@ -1098,7 +1098,7 @@ MarkFinished 标记会话完成。 Parameters:
 - streamID: 会话标识
 
 <a name="SessionManager.Publish"></a>
-### func \(\*SessionManager\) Publish
+### func \(\*SessionManager\) [Publish](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L153>)
 
 ```go
 func (m *SessionManager) Publish(streamID string, chunk botcore.StreamChunk) bool
@@ -1114,7 +1114,7 @@ Returns:
 - bool: 成功写入返回 true
 
 <a name="SessionManager.SetUpdate"></a>
-### func \(\*SessionManager\) SetUpdate
+### func \(\*SessionManager\) [SetUpdate](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/session.go#L260>)
 
 ```go
 func (m *SessionManager) SetUpdate(streamID string, update botcore.Update)
@@ -1123,7 +1123,7 @@ func (m *SessionManager) SetUpdate(streamID string, update botcore.Update)
 SetUpdate 绑定标准化事件到会话。
 
 <a name="Source"></a>
-## type Source
+## type [Source](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L29-L33>)
 
 Source 卡片来源样式信息
 
@@ -1136,7 +1136,7 @@ type Source struct {
 ```
 
 <a name="StreamEmitter"></a>
-## type StreamEmitter
+## type [StreamEmitter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L96>)
 
 StreamEmitter 将 StreamChunk 转换为企业微信 StreamReply。
 
@@ -1145,7 +1145,7 @@ type StreamEmitter struct{}
 ```
 
 <a name="StreamEmitter.Encode"></a>
-### func \(StreamEmitter\) Encode
+### func \(StreamEmitter\) [Encode](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L99>)
 
 ```go
 func (StreamEmitter) Encode(update botcore.Update, streamID string, chunk botcore.StreamChunk) (interface{}, error)
@@ -1154,7 +1154,7 @@ func (StreamEmitter) Encode(update botcore.Update, streamID string, chunk botcor
 Encode 将 chunk 降级为 StreamReply 结构体。
 
 <a name="StreamPayload"></a>
-## type StreamPayload
+## type [StreamPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L69-L74>)
 
 StreamPayload 表达流式消息的会话信息。
 
@@ -1168,7 +1168,7 @@ type StreamPayload struct {
 ```
 
 <a name="StreamReply"></a>
-## type StreamReply
+## type [StreamReply](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L150-L153>)
 
 StreamReply 用于构造流式消息回复的明文结构。
 
@@ -1180,7 +1180,7 @@ type StreamReply struct {
 ```
 
 <a name="BuildStreamReply"></a>
-### func BuildStreamReply
+### func [BuildStreamReply](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L199>)
 
 ```go
 func BuildStreamReply(streamID, content string, finish bool) StreamReply
@@ -1189,7 +1189,7 @@ func BuildStreamReply(streamID, content string, finish bool) StreamReply
 BuildStreamReply 根据 streamID 组装流式回复明文。
 
 <a name="StreamReplyBody"></a>
-## type StreamReplyBody
+## type [StreamReplyBody](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L156-L161>)
 
 StreamReplyBody 为流式回复中的具体内容。
 
@@ -1203,7 +1203,7 @@ type StreamReplyBody struct {
 ```
 
 <a name="StreamWithTemplateCardMessage"></a>
-## type StreamWithTemplateCardMessage
+## type [StreamWithTemplateCardMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L176-L180>)
 
 StreamWithTemplateCardMessage 被动回复流式\+模版卡片
 
@@ -1216,7 +1216,7 @@ type StreamWithTemplateCardMessage struct {
 ```
 
 <a name="SubmitButton"></a>
-## type SubmitButton
+## type [SubmitButton](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L157-L160>)
 
 SubmitButton 提交按钮样式
 
@@ -1228,7 +1228,7 @@ type SubmitButton struct {
 ```
 
 <a name="TemplateCard"></a>
-## type TemplateCard
+## type [TemplateCard](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L5-L26>)
 
 TemplateCard 模版卡片结构体，涵盖多种卡片类型。 对应文档：5\_模版卡片类型.md
 
@@ -1258,7 +1258,7 @@ type TemplateCard struct {
 ```
 
 <a name="TemplateCardEvent"></a>
-## type TemplateCardEvent
+## type [TemplateCardEvent](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L95-L100>)
 
 TemplateCardEvent 模板卡片事件
 
@@ -1272,7 +1272,7 @@ type TemplateCardEvent struct {
 ```
 
 <a name="TemplateCardMessage"></a>
-## type TemplateCardMessage
+## type [TemplateCardMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L170-L173>)
 
 TemplateCardMessage 被动回复模版卡片消息
 
@@ -1284,7 +1284,7 @@ type TemplateCardMessage struct {
 ```
 
 <a name="TextMessage"></a>
-## type TextMessage
+## type [TextMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L164-L167>)
 
 TextMessage 被动回复文本消息
 
@@ -1296,7 +1296,7 @@ type TextMessage struct {
 ```
 
 <a name="TextPayload"></a>
-## type TextPayload
+## type [TextPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L35-L37>)
 
 TextPayload 为文本消息内容。
 
@@ -1307,7 +1307,7 @@ type TextPayload struct {
 ```
 
 <a name="UpdateTemplateCardMessage"></a>
-## type UpdateTemplateCardMessage
+## type [UpdateTemplateCardMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L183-L187>)
 
 UpdateTemplateCardMessage 更新模版卡片消息
 
@@ -1320,7 +1320,7 @@ type UpdateTemplateCardMessage struct {
 ```
 
 <a name="VerticalContent"></a>
-## type VerticalContent
+## type [VerticalContent](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/template_card.go#L79-L82>)
 
 VerticalContent 卡片二级垂直内容
 
@@ -1332,7 +1332,7 @@ type VerticalContent struct {
 ```
 
 <a name="VoicePayload"></a>
-## type VoicePayload
+## type [VoicePayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/message.go#L47-L49>)
 
 VoicePayload 为语音消息内容。
 

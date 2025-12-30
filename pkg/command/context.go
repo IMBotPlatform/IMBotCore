@@ -25,7 +25,6 @@ type ExecutionContext struct {
 	StreamID  string
 	Values    ContextValues
 	Store     ConversationStore
-	llm       LLMProvider
 	responder botcore.ActiveResponder
 
 	// sendSignal 是一个回调函数，允许 Command 立即向 Pipeline 发送信号
@@ -51,11 +50,6 @@ func (ctx *ExecutionContext) SetNoResponse() {
 			IsFinal: true,
 		})
 	}
-}
-
-// LLM 返回 AI 服务提供者。
-func (ctx *ExecutionContext) LLM() LLMProvider {
-	return ctx.llm
 }
 
 // Responder 返回主动消息发送器。

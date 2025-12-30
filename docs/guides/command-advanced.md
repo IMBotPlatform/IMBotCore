@@ -1,4 +1,4 @@
-# Command 进阶：上下文、三种回复模式、LLM / Responder
+# Command 进阶：上下文、三种回复模式、Responder
 
 更新时间：2025-12-14
 
@@ -7,7 +7,6 @@
 - 如何获取 `ExecutionContext`
 - 如何使用上下文存储（ConversationStore）
 - 三种被动/主动回复模式
-- 如何在命令中调用 LLM（可选）
 
 ## 1) 获取 ExecutionContext
 
@@ -72,29 +71,6 @@ if ctx.Responder() != nil {
 }
 ```
 
-## 4) 在命令中调用 LLM（可选）
-
-`ExecutionContext.LLM()` 返回一个 `command.LLMProvider`：
-
-```go
-ctx := command.FromContext(cmd.Context())
-llm := ctx.LLM()
-if llm == nil {
-	cmd.Println("LLM not configured")
-	return nil
-}
-
-ch, err := llm.Chat(cmd.Context(), ctx.ConversationKey(), "总结一下：...", command.WithModel("gpt-4o"))
-if err != nil {
-	return err
-}
-
-for part := range ch {
-	cmd.Print(part)
-}
-```
-
 ## 下一步
 
 - 企业微信接入案例（并附官方资料索引）：`docs/cases/wecom.md`
-

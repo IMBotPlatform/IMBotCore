@@ -1,13 +1,12 @@
 # IMBotCore
 
-`IMBotCore` 是 `IMBotPlatform` 组织下的即时通讯机器人核心库：提供平台无关的 **Update / Pipeline / StreamChunk** 抽象与基于 Cobra 的 **Command 指令系统**，支持**流式输出**与（可选）**LLM 能力封装**。
+`IMBotCore` 是 `IMBotPlatform` 组织下的即时通讯机器人核心库：提供平台无关的 **Update / Pipeline / StreamChunk** 抽象与基于 Cobra 的 **Command 指令系统**，支持**流式输出**与上下文能力。
 
 ## 特性
 
 - **统一输入**：`pkg/botcore` 提供 `Update`（平台适配器输出）与 `Chain`（责任链路由）。
 - **指令系统**：`pkg/command` 提供解析、命令树工厂、执行上下文与三种回复语义（文本流 / Payload / NoResponse）。
 - **流式输出**：以 `<-chan StreamChunk` 的方式向上游平台持续产出片段，并以 `IsFinal=true` 明确结束。
-- **可选 AI**：`pkg/ai` 封装 LLM 能力（基于 `langchaingo`），供命令/业务按需调用。
 - **平台案例**：`pkg/platform/wecom` 提供企业微信回调处理与流式响应参考实现（案例，不绑定你的框架/部署方式）。
 
 ## 快速开始

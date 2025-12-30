@@ -9,7 +9,7 @@
 1) 先读：`docs/overview.md`（定位与边界）  
 2) 再读：`docs/concepts/command.md`（指令系统的核心抽象）  
 3) 上手：`docs/guides/command-quickstart.md`（新增一个命令并执行）  
-4) 进阶：`docs/guides/command-advanced.md`（上下文、三种回复模式、LLM/Responder）  
+4) 进阶：`docs/guides/command-advanced.md`（上下文、三种回复模式、Responder）  
 5) 案例：`docs/cases/wecom.md`（企业微信接入，仅作为案例）  
 
 ## 目录导航

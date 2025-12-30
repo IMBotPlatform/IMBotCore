@@ -2,7 +2,7 @@
 
 更新时间：2025-12-14
 
-`IMBotCore` 是 `IMBotPlatform` 组织下的核心可复用包集合，目标是让你用**最小成本**把“聊天输入”变成“可执行的结构化指令（Command）”，并支持流式输出、上下文与（可选）LLM 能力。
+`IMBotCore` 是 `IMBotPlatform` 组织下的核心可复用包集合，目标是让你用**最小成本**把“聊天输入”变成“可执行的结构化指令（Command）”，并支持流式输出与上下文。
 
 ## 设计目标（第一性原理）
 
@@ -18,7 +18,6 @@
 
 - `pkg/command`：命令系统（基于 Cobra），包含解析、执行、上下文、三种回复模式（文本流 / Payload / NoResponse）。
 - `pkg/botcore`：基础抽象（Update / StreamChunk / PipelineInvoker / Chain 路由）。
-- `pkg/ai`：LLM 能力封装（可选，供命令/业务调用）。
 - `pkg/platform/wecom`：企业微信接入案例（Crypt、Bot、Adapter、Emitter 等）。
 
 ## 你需要提供什么
@@ -33,4 +32,3 @@
 
 - 直接上手：`docs/guides/command-quickstart.md`
 - 理解核心抽象：`docs/concepts/command.md` · `docs/concepts/pipeline.md`
-

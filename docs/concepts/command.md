@@ -40,7 +40,6 @@
 
 - 获取本次 `Update`（例如 ChatID / SenderID / Metadata）
 - 读写上下文键值（`Values` + `ConversationStore`）
-- 可选调用 LLM（`LLM()`）
 - 可选主动推送（`Responder()`）
 - 发送两类特殊信号：`SetResponsePayload`、`SetNoResponse`
 
@@ -55,5 +54,4 @@
 ## 进一步阅读
 
 - 上手新增命令：`docs/guides/command-quickstart.md`
-- 进阶：上下文/Responder/LLM/输出模式：`docs/guides/command-advanced.md`
-
+- 进阶：上下文/Responder/输出模式：`docs/guides/command-advanced.md`
