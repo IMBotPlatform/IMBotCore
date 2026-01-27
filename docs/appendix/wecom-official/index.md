@@ -24,7 +24,7 @@
 - `docs/appendix/wecom-official/wecom_ai_bot/4_被动回复消息.md`
 - `docs/appendix/wecom-official/wecom_ai_bot/5_模版卡片类型.md`
 - `docs/appendix/wecom-official/wecom_ai_bot/6_回调和回复的加解密方案.md`
-- `docs/appendix/wecom-official/wecom_ai_bot/7_加解密说明.md`
+- `docs/appendix/wecom-official/wecom_ai_bot/7_主动回复消息.md`
 
 ## 与 IMBotCore 的关系
 
@@ -37,4 +37,3 @@
 1) 先理解 `IMBotCore` 的 Command 系统：`docs/concepts/command.md`
 2) 再看企业微信接入案例：`docs/cases/wecom.md`
 3) 最后按需查阅本附录中的官方资料
-

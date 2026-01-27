@@ -190,6 +190,11 @@ func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
+	// 关键步骤：反馈事件仅支持空包回复，直接返回 200，避免进入 pipeline。
+	if msg.MsgType == "event" && msg.Event != nil && (msg.Event.FeedbackEvent != nil || msg.Event.EventType == "feedback_event") {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	// 第四步：区分首次或刷新场景，由 Bot 内部流式逻辑产出响应体。
 	var resp EncryptedResponse

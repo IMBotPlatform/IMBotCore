@@ -2,6 +2,7 @@ package wecom
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
@@ -50,7 +51,20 @@ func (MessageAdapter) Normalize(raw interface{}) (botcore.Update, error) {
 			text = cardEvent.EventKey // 将 Key 视为指令文本，便于 CommandManager 路由
 		} else if msg.Event.FeedbackEvent != nil {
 			// 反馈事件
-			meta["feedback_id"] = msg.Event.FeedbackEvent.ID
+			feedback := msg.Event.FeedbackEvent
+			// 关键步骤：将反馈事件字段写入 metadata，供业务层使用。
+			meta["feedback_id"] = feedback.ID
+			meta["feedback_type"] = strconv.Itoa(feedback.Type)
+			if feedback.Content != "" {
+				meta["feedback_content"] = feedback.Content
+			}
+			if len(feedback.InaccurateReasonList) > 0 {
+				reasons := make([]string, 0, len(feedback.InaccurateReasonList))
+				for _, reason := range feedback.InaccurateReasonList {
+					reasons = append(reasons, strconv.Itoa(reason))
+				}
+				meta["feedback_reasons"] = strings.Join(reasons, ",")
+			}
 		}
 	}
 
