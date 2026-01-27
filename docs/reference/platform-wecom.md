@@ -1195,10 +1195,11 @@ StreamReplyBody 为流式回复中的具体内容。
 
 ```go
 type StreamReplyBody struct {
-    ID      string      `json:"id"`
-    Finish  bool        `json:"finish"`
-    Content string      `json:"content"`
-    MsgItem []MixedItem `json:"msg_item,omitempty"`
+    ID       string        `json:"id"`
+    Finish   bool          `json:"finish"`
+    Content  string        `json:"content"`
+    MsgItem  []MixedItem   `json:"msg_item,omitempty"`
+    Feedback *FeedbackInfo `json:"feedback,omitempty"` // 反馈信息（流式回复可选）
 }
 ```
 
