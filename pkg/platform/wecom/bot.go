@@ -17,13 +17,14 @@ var (
 
 // Bot 集成企业微信回调处理与流式响应逻辑。
 // Fields:
-//   - Sessions: 管理流式会话生命周期的 SessionManager
+//   - Streams: 管理流式会话生命周期的 StreamManager
 //   - Crypto: 负责签名校验与加解密的 Crypt
 //   - Pipeline: 首包触发的业务流水线实现，可为空
 //   - Timeout: 刷新请求等待流水线片段的最大时长
 type Bot struct {
-	Sessions *SessionManager
-	Crypto   *Crypt
+	Streams *StreamManager
+	Crypto  *Crypt
+
 	Pipeline botcore.PipelineInvoker
 	Adapter  botcore.Adapter
 	Emitter  botcore.Emitter
@@ -52,7 +53,7 @@ func WithEmitter(emitter botcore.Emitter) BotOption {
 // NewBot 根据给定参数创建 Bot。
 // Parameters:
 //   - crypto: 企业微信加解密上下文，不能为空
-//   - sessionTTL: 会话最大存活时间（<=0 时使用 SessionManager 默认值）
+//   - sessionTTL: 会话最大存活时间（<=0 时使用 StreamManager 默认值）
 //   - timeout: 刷新请求等待流水线片段的最大时长（<=0 时在 Refresh 内回退默认值）
 //   - pipeline: 首包触发的业务流水线实现，可为 nil
 //
@@ -64,9 +65,9 @@ func NewBot(crypto *Crypt, sessionTTL, timeout time.Duration, pipeline botcore.P
 		return nil, errors.New("crypto is required")
 	}
 
-	sessions := NewSessionManager(sessionTTL)
+	sessions := NewStreamManager(sessionTTL)
 	bot := &Bot{
-		Sessions: sessions,
+		Streams:  sessions,
 		Crypto:   crypto,
 		Pipeline: pipeline,
 		Timeout:  timeout,
@@ -156,7 +157,7 @@ func (b *Bot) handleGet(w http.ResponseWriter, r *http.Request) {
 //	     v
 //	[JSON序列化响应] -> [写回加密包]
 func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
-	if b == nil || b.Crypto == nil || b.Sessions == nil {
+	if b == nil || b.Crypto == nil || b.Streams == nil {
 		http.Error(w, "server misconfigured", http.StatusInternalServerError)
 		return
 	}
@@ -252,8 +253,8 @@ func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse,
 	}
 
 	// 第一步：创建或复用流式会话。
-	session, isNew := b.Sessions.CreateOrGet(msg)
-	b.Sessions.SetUpdate(session.StreamID, update)
+	session, isNew := b.Streams.CreateOrGet(msg)
+	b.Streams.SetUpdate(session.StreamID, update)
 
 	// 默认首包（空流式开始）
 	initialChunk := botcore.StreamChunk{Content: "", IsFinal: false}
@@ -267,7 +268,7 @@ func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse,
 				if ok {
 					// Case 0: 静默信号
 					if chunk.Payload == botcore.NoResponse {
-						b.Sessions.MarkFinished(session.StreamID)
+						b.Streams.MarkFinished(session.StreamID)
 						return EncryptedResponse{}, ErrNoResponse
 					}
 
@@ -275,7 +276,7 @@ func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse,
 						// Case 1: 非流式 Payload（如 TemplateCard），直接一次性响应
 						// 这种情况下通常意味着对话结束，或者是独立的事件响应
 						if chunk.IsFinal {
-							b.Sessions.MarkFinished(session.StreamID)
+							b.Streams.MarkFinished(session.StreamID)
 						}
 						// 如果还有后续数据，需启动后台消费（虽然对于 Payload 响应通常不应有后续）
 						go b.consumePipeline(outCh, msg.MsgID, session.StreamID)
@@ -290,16 +291,16 @@ func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse,
 					// Case 2: 流式内容，首包携带数据
 					// 注意：这里不将 chunk push 到 session，因为我们直接在 Initial 返回了
 					// 后续的 Refresh 将消费后续的帧
-					b.Sessions.Accumulate(session.StreamID, chunk.Content)
+					b.Streams.Accumulate(session.StreamID, chunk.Content)
 					initialChunk = chunk
 					if chunk.IsFinal {
-						b.Sessions.MarkFinished(session.StreamID)
+						b.Streams.MarkFinished(session.StreamID)
 					}
 					// 启动后台消费剩余帧
 					go b.consumePipeline(outCh, msg.MsgID, session.StreamID)
 				} else {
 					// Channel closed immediately
-					b.Sessions.MarkFinished(session.StreamID)
+					b.Streams.MarkFinished(session.StreamID)
 					initialChunk = botcore.StreamChunk{Content: "", IsFinal: true}
 				}
 			case <-time.After(200 * time.Millisecond):
@@ -375,7 +376,7 @@ func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse,
 	if timeout <= 0 {
 		timeout = 500 * time.Millisecond
 	}
-	chunk := b.Sessions.Consume(streamID, timeout) // 阻塞等待流水线产出
+	chunk := b.Streams.Consume(streamID, timeout) // 阻塞等待流水线产出
 	if chunk == nil {
 		// 第三步：消费失败时尝试回退到 fallback，保证终止片段可达。
 		if msg.MsgID != "" {
@@ -388,7 +389,7 @@ func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse,
 	}
 	if chunk == nil {
 		// 无片段可用，返回保持连接的空包。
-		update := b.Sessions.GetUpdate(streamID)
+		update := b.Streams.GetUpdate(streamID)
 		reply, err := b.buildReply(update, streamID, botcore.StreamChunk{Content: "", IsFinal: false})
 		if err != nil {
 			return EncryptedResponse{}, err
@@ -397,11 +398,11 @@ func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse,
 	}
 	if chunk.IsFinal {
 		// 最终片段需标记会话完成，避免资源泄露。
-		b.Sessions.MarkFinished(streamID)
+		b.Streams.MarkFinished(streamID)
 	}
 
 	// 第四步：将片段封装为流式响应并加密返回。
-	update := b.Sessions.GetUpdate(streamID)
+	update := b.Streams.GetUpdate(streamID)
 	reply, err := b.buildReply(update, streamID, *chunk)
 	if err != nil {
 		return EncryptedResponse{}, err
@@ -436,18 +437,18 @@ func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse,
 func (b *Bot) pushStreamChunk(streamID, msgID string, chunk botcore.StreamChunk) bool {
 	target := streamID
 	if target == "" && msgID != "" {
-		if located, ok := b.Sessions.GetStreamIDByMsg(msgID); ok {
+		if located, ok := b.Streams.GetStreamIDByMsg(msgID); ok {
 			target = located
 		}
 	}
 	if target == "" {
 		return b.cacheFallback(msgID, chunk)
 	}
-	if !b.Sessions.Publish(target, chunk) {
+	if !b.Streams.Publish(target, chunk) {
 		return b.cacheFallback(msgID, chunk)
 	}
 	if chunk.IsFinal {
-		b.Sessions.MarkFinished(target)
+		b.Streams.MarkFinished(target)
 	}
 	return true
 }
@@ -477,12 +478,12 @@ func (b *Bot) SetFinalMessage(msgID, content string) {
 
 // Cleanup 清理过期会话，防止 Session 过度累积。
 func (b *Bot) Cleanup() {
-	if b == nil || b.Sessions == nil {
+	if b == nil || b.Streams == nil {
 		return
 	}
 
-	// 委托 SessionManager 移除超时会话。
-	b.Sessions.Cleanup()
+	// 委托 StreamManager 移除超时会话。
+	b.Streams.Cleanup()
 }
 
 func (b *Bot) consumePipeline(outCh <-chan botcore.StreamChunk, msgID, streamID string) {
