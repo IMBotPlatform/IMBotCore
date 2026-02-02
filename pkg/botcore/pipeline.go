@@ -3,7 +3,7 @@ package botcore
 // StreamChunk 描述流式输出片段。
 type StreamChunk struct {
 	Content string
-	Payload interface{} // 扩展：支持携带复杂对象（如 TemplateCard），用于非流式回复
+	Payload any // 扩展：支持携带复杂对象（如 TemplateCard），用于非流式回复
 	IsFinal bool
 }
 
@@ -13,24 +13,16 @@ var NoResponse = struct{}{}
 
 // PipelineInvoker 抽象命令/业务执行器。
 type PipelineInvoker interface {
-	Trigger(update Update, streamID string) <-chan StreamChunk
-}
-
-// ActiveResponder 定义主动发送消息的能力。
-// 接口设计为支持通用和特定类型的发送，方便使用。
-type ActiveResponder interface {
-	Send(responseURL string, msg interface{}) error
-	SendMarkdown(responseURL, content string) error
-	SendTemplateCard(responseURL string, card interface{}) error
+	Trigger(update RequestSnapshot) <-chan StreamChunk
 }
 
 // PipelineFunc 便于直接以函数充当 PipelineInvoker。
-type PipelineFunc func(update Update, streamID string) <-chan StreamChunk
+type PipelineFunc func(update RequestSnapshot) <-chan StreamChunk
 
 // Trigger 实现 PipelineInvoker 接口。
-func (f PipelineFunc) Trigger(update Update, streamID string) <-chan StreamChunk {
+func (f PipelineFunc) Trigger(update RequestSnapshot) <-chan StreamChunk {
 	if f == nil {
 		return nil
 	}
-	return f(update, streamID)
+	return f(update)
 }

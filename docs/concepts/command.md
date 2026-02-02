@@ -1,6 +1,6 @@
 # Command 概念说明
 
-更新时间：2025-12-14
+更新时间：2026-01-30
 
 本页解释 `pkg/command` 的核心抽象与它解决的问题：**把一段文本指令稳定地解析、路由、执行，并把输出转成流式结果**。
 
@@ -23,7 +23,7 @@
 
 `Manager` 实现了 `botcore.PipelineInvoker`：
 
-- 输入：`botcore.Update`（来自平台适配器）
+- 输入：`botcore.RequestSnapshot`（来自平台适配器）
 - 输出：`<-chan botcore.StreamChunk`（流式片段）
 
 它内部做了：
@@ -38,7 +38,7 @@
 
 命令 handler 可以通过 `command.FromContext(cmd.Context())` 取到 `ExecutionContext`，用于：
 
-- 获取本次 `Update`（例如 ChatID / SenderID / Metadata）
+- 获取本次 `RequestSnapshot`（例如 ChatID / SenderID / Metadata / Attachments / ResponseURL）
 - 读写上下文键值（`Values` + `ConversationStore`）
 - 可选主动推送（`Responder()`）
 - 发送两类特殊信号：`SetResponsePayload`、`SetNoResponse`

@@ -1,6 +1,6 @@
 # Command 快速上手：新增一个命令并执行
 
-更新时间：2025-12-14
+更新时间：2026-01-30
 
 本页演示如何在你的项目中：
 
@@ -43,14 +43,14 @@ func newRootCmd() *cobra.Command {
 }
 
 func main() {
-	update := botcore.Update{
+	update := botcore.RequestSnapshot{
 		ChatID:   "chat-1",
 		SenderID: "user-1",
 		Text:     "/ping",
 	}
 
 	manager := imbotcommand.NewManager(newRootCmd, imbotcommand.NewMemoryStore())
-	for chunk := range manager.Trigger(update, "stream-1") {
+	for chunk := range manager.Trigger(update) {
 		fmt.Print(chunk.Content)
 	}
 }
@@ -65,4 +65,3 @@ func main() {
 
 - 理解输出语义与上下文：`docs/guides/command-advanced.md`
 - 理解路由组合：`docs/concepts/pipeline.md`
-

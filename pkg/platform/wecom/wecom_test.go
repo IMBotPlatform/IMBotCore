@@ -1,3 +1,4 @@
+// Package wecom tests cover crypt/stream/bot 的协议兼容与关键行为。
 package wecom
 
 import (
@@ -13,6 +14,7 @@ import (
 	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 )
 
+// TestCalcSignatureDeterministic 验证签名算法具备确定性。
 func TestCalcSignatureDeterministic(t *testing.T) {
 	sig1 := calcSignature("token", "12345", "nonce", "cipher")
 	sig2 := calcSignature("token", "12345", "nonce", "cipher")
@@ -21,15 +23,17 @@ func TestCalcSignatureDeterministic(t *testing.T) {
 	}
 }
 
+// TestCryptEncryptDecryptRoundTrip 验证加解密流程能完整往返。
 func TestCryptEncryptDecryptRoundTrip(t *testing.T) {
 	rawKey := bytes.Repeat([]byte{0x11}, 32)
 	encodingKey := base64.StdEncoding.EncodeToString(rawKey)
+	// 企业微信 EncodingAESKey 为 43 字节 Base64 字符串，需去掉末尾 '='。
 	encodingKey = strings.TrimRight(encodingKey, "=")
 	crypt, err := NewCrypt("token", encodingKey, "corpID")
 	if err != nil {
 		t.Fatalf("create crypt: %v", err)
 	}
-	payload := BuildStreamReply("stream-id", "hello", false)
+	payload := buildStreamReply("stream-id", "hello", false)
 	ts := "1700000000"
 	resp, err := crypt.EncryptResponse(payload, ts, "nonce")
 	if err != nil {
@@ -47,26 +51,27 @@ func TestCryptEncryptDecryptRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSessionManagerPublishConsume 验证流式片段累积与过期清理逻辑。
 func TestSessionManagerPublishConsume(t *testing.T) {
-	mgr := NewSessionManager(50 * time.Millisecond)
+	mgr := newStreamManager(50*time.Millisecond, 10*time.Millisecond)
 	msg := &Message{MsgID: "mid", ChatID: "cid", From: MessageSender{UserID: "uid"}}
-	session, isNew := mgr.CreateOrGet(msg)
+	session, isNew := mgr.createOrGet(msg)
 	if !isNew {
 		t.Fatalf("expected new session")
 	}
 	if session.StreamID == "" {
 		t.Fatalf("empty stream id")
 	}
-	if _, ok := mgr.GetStreamIDByMsg("mid"); !ok {
+	if _, ok := mgr.getStreamIDByMsg("mid"); !ok {
 		t.Fatalf("msg id not indexed")
 	}
 
-	// Publish two chunks rapidly
-	mgr.Publish(session.StreamID, botcore.StreamChunk{Content: "chunk1"})
-	mgr.Publish(session.StreamID, botcore.StreamChunk{Content: "final", IsFinal: true})
+	// publish two chunks rapidly
+	mgr.publish(session.StreamID, botcore.StreamChunk{Content: "chunk1"})
+	mgr.publish(session.StreamID, botcore.StreamChunk{Content: "final", IsFinal: true})
 
-	// Consume with a small timeout - should drain both and return merged result
-	chunk := mgr.Consume(session.StreamID, 10*time.Millisecond)
+	// consume with a small timeout - should drain both and return merged result
+	_, chunk := mgr.getLatestChunk(session.StreamID)
 	if chunk == nil {
 		t.Fatalf("expected chunk")
 	}
@@ -79,37 +84,38 @@ func TestSessionManagerPublishConsume(t *testing.T) {
 	}
 
 	time.Sleep(60 * time.Millisecond)
-	mgr.Cleanup()
-	if _, ok := mgr.GetStreamIDByMsg("mid"); ok {
+	mgr.cleanup()
+	if _, ok := mgr.getStreamIDByMsg("mid"); ok {
 		t.Fatalf("session not cleaned")
 	}
 }
 
-func TestBotRefreshFallback(t *testing.T) {
+// TestBotRefreshFinalMessage 验证 setFinalMessage 会被 refresh 拉取返回。
+func TestBotRefreshFinalMessage(t *testing.T) {
 	rawKey := bytes.Repeat([]byte{0x22}, 32)
 	key := strings.TrimRight(base64.StdEncoding.EncodeToString(rawKey), "=")
 	crypt, err := NewCrypt("token", key, "corpID")
 	if err != nil {
 		t.Fatalf("create crypt: %v", err)
 	}
-	mgr := NewSessionManager(time.Minute)
-	bot := &Bot{Sessions: mgr, Crypto: crypt, Timeout: 5 * time.Millisecond, Adapter: MessageAdapter{}, Emitter: StreamEmitter{}}
+	mgr := newStreamManager(time.Minute, 5*time.Millisecond)
+	bot := &Bot{streamMgr: mgr, crypto: crypt}
 	msg := &Message{MsgID: "mid", MsgType: "text", Text: &TextPayload{Content: "hi"}, From: MessageSender{UserID: "uid"}}
 	ts := "1700000000"
-	initialResp, err := bot.Initial(msg, ts, "nonce")
+	initialResp, err := bot.initial(msg, ts, "nonce")
 	if err != nil {
 		t.Fatalf("initial: %v", err)
 	}
 	if initialResp.Encrypt == "" {
 		t.Fatalf("empty encrypt in initial resp")
 	}
-	sessionID, ok := mgr.GetStreamIDByMsg("mid")
+	sessionID, ok := mgr.getStreamIDByMsg("mid")
 	if !ok {
 		t.Fatalf("missing stream id")
 	}
-	bot.SetFinalMessage("mid", "done")
+	bot.setFinalMessage("mid", "done")
 	refresh := &Message{MsgID: "mid", MsgType: "stream", Stream: &StreamPayload{ID: sessionID}}
-	refreshResp, err := bot.Refresh(refresh, ts, "nonce")
+	refreshResp, err := bot.refresh(refresh, ts, "nonce")
 	if err != nil {
 		t.Fatalf("refresh: %v", err)
 	}
@@ -131,6 +137,147 @@ func TestBotRefreshFallback(t *testing.T) {
 	}
 }
 
+// TestBotInitialReturnsEmptyAckAndRefreshGetsPipelineOutput 验证首包空 ACK + refresh 拉取流水线输出。
+func TestBotInitialReturnsEmptyAckAndRefreshGetsPipelineOutput(t *testing.T) {
+	rawKey := bytes.Repeat([]byte{0x33}, 32)
+	key := strings.TrimRight(base64.StdEncoding.EncodeToString(rawKey), "=")
+	crypt, err := NewCrypt("token", key, "corpID")
+	if err != nil {
+		t.Fatalf("create crypt: %v", err)
+	}
+	pipeline := botcore.PipelineFunc(func(update botcore.RequestSnapshot) <-chan botcore.StreamChunk {
+		ch := make(chan botcore.StreamChunk, 2)
+		ch <- botcore.StreamChunk{Content: "hi ", IsFinal: false}
+		ch <- botcore.StreamChunk{Content: "there", IsFinal: true}
+		close(ch)
+		return ch
+	})
+	mgr := newStreamManager(time.Minute, 200*time.Millisecond)
+	bot := &Bot{streamMgr: mgr, crypto: crypt, pipeline: pipeline}
+	msg := &Message{MsgID: "mid", MsgType: "text", Text: &TextPayload{Content: "hello"}, From: MessageSender{UserID: "uid"}}
+	ts := "1700000000"
+
+	initialResp, err := bot.initial(msg, ts, "nonce")
+	if err != nil {
+		t.Fatalf("initial: %v", err)
+	}
+	initialPlain, err := crypt.DecryptMessage(initialResp.MsgSignature, initialResp.Timestamp, initialResp.Nonce, EncryptedRequest{Encrypt: initialResp.Encrypt})
+	if err != nil {
+		t.Fatalf("decrypt initial: %v", err)
+	}
+	if initialPlain.Stream == nil {
+		t.Fatalf("missing stream payload in initial")
+	}
+	if initialPlain.Stream.Content != "" {
+		t.Fatalf("expected empty initial content, got %q", initialPlain.Stream.Content)
+	}
+	if initialPlain.Stream.Finish {
+		t.Fatalf("expected initial finish false")
+	}
+	sessionID, ok := mgr.getStreamIDByMsg("mid")
+	if !ok || sessionID == "" {
+		t.Fatalf("missing stream id")
+	}
+	if initialPlain.Stream.ID != sessionID {
+		t.Fatalf("unexpected stream id: %s", initialPlain.Stream.ID)
+	}
+
+	refresh := &Message{MsgID: "mid", MsgType: "stream", Stream: &StreamPayload{ID: sessionID}}
+	refreshResp, err := bot.refresh(refresh, ts, "nonce")
+	if err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	refreshPlain, err := crypt.DecryptMessage(refreshResp.MsgSignature, refreshResp.Timestamp, refreshResp.Nonce, EncryptedRequest{Encrypt: refreshResp.Encrypt})
+	if err != nil {
+		t.Fatalf("decrypt refresh: %v", err)
+	}
+	if refreshPlain.Stream == nil {
+		t.Fatalf("missing stream payload in refresh")
+	}
+	if !refreshPlain.Stream.Finish {
+		// 关键步骤：首轮 refresh 可能只取到部分内容，继续拉取直到完成。
+		refreshResp, err = bot.refresh(refresh, ts, "nonce")
+		if err != nil {
+			t.Fatalf("refresh second: %v", err)
+		}
+		refreshPlain, err = crypt.DecryptMessage(refreshResp.MsgSignature, refreshResp.Timestamp, refreshResp.Nonce, EncryptedRequest{Encrypt: refreshResp.Encrypt})
+		if err != nil {
+			t.Fatalf("decrypt refresh second: %v", err)
+		}
+		if refreshPlain.Stream == nil {
+			t.Fatalf("missing stream payload in refresh second")
+		}
+	}
+	if refreshPlain.Stream.Content != "hi there" {
+		t.Fatalf("unexpected content: %s", refreshPlain.Stream.Content)
+	}
+	if !refreshPlain.Stream.Finish {
+		t.Fatalf("expected finish true")
+	}
+}
+
+// TestBotInitialNoResponseEndsStream 验证 NoResponse 会直接结束流式会话。
+func TestBotInitialNoResponseEndsStream(t *testing.T) {
+	rawKey := bytes.Repeat([]byte{0x66}, 32)
+	key := strings.TrimRight(base64.StdEncoding.EncodeToString(rawKey), "=")
+	crypt, err := NewCrypt("token", key, "corpID")
+	if err != nil {
+		t.Fatalf("create crypt: %v", err)
+	}
+	pipeline := botcore.PipelineFunc(func(update botcore.RequestSnapshot) <-chan botcore.StreamChunk {
+		ch := make(chan botcore.StreamChunk, 1)
+		ch <- botcore.StreamChunk{Payload: botcore.NoResponse}
+		close(ch)
+		return ch
+	})
+	mgr := newStreamManager(time.Minute, 200*time.Millisecond)
+	bot := &Bot{streamMgr: mgr, crypto: crypt, pipeline: pipeline}
+	msg := &Message{MsgID: "mid", MsgType: "text", Text: &TextPayload{Content: "hello"}, From: MessageSender{UserID: "uid"}}
+	ts := "1700000000"
+
+	initialResp, err := bot.initial(msg, ts, "nonce")
+	if err != nil {
+		t.Fatalf("initial: %v", err)
+	}
+	initialPlain, err := crypt.DecryptMessage(initialResp.MsgSignature, initialResp.Timestamp, initialResp.Nonce, EncryptedRequest{Encrypt: initialResp.Encrypt})
+	if err != nil {
+		t.Fatalf("decrypt initial: %v", err)
+	}
+	if initialPlain.Stream == nil {
+		t.Fatalf("missing stream payload in initial")
+	}
+	if initialPlain.Stream.Content != "" {
+		t.Fatalf("expected empty initial content, got %q", initialPlain.Stream.Content)
+	}
+	if initialPlain.Stream.Finish {
+		t.Fatalf("expected initial finish false")
+	}
+	sessionID, ok := mgr.getStreamIDByMsg("mid")
+	if !ok || sessionID == "" {
+		t.Fatalf("missing stream id")
+	}
+
+	refresh := &Message{MsgID: "mid", MsgType: "stream", Stream: &StreamPayload{ID: sessionID}}
+	refreshResp, err := bot.refresh(refresh, ts, "nonce")
+	if err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	refreshPlain, err := crypt.DecryptMessage(refreshResp.MsgSignature, refreshResp.Timestamp, refreshResp.Nonce, EncryptedRequest{Encrypt: refreshResp.Encrypt})
+	if err != nil {
+		t.Fatalf("decrypt refresh: %v", err)
+	}
+	if refreshPlain.Stream == nil {
+		t.Fatalf("missing stream payload in refresh")
+	}
+	if refreshPlain.Stream.Content != "" {
+		t.Fatalf("unexpected content: %s", refreshPlain.Stream.Content)
+	}
+	if !refreshPlain.Stream.Finish {
+		t.Fatalf("expected finish true")
+	}
+}
+
+// TestVerifyURLHandlesDecodedQueryValue 验证 URL 解码导致的 '+' 还原场景。
 func TestVerifyURLHandlesDecodedQueryValue(t *testing.T) {
 	token := "token"
 	rawKey := bytes.Repeat([]byte{0x34}, 32)
@@ -190,6 +337,7 @@ func TestVerifyURLHandlesDecodedQueryValue(t *testing.T) {
 	}
 }
 
+// TestVerifyURLRoundTrip 验证 URL 验证流程的加解密往返。
 func TestVerifyURLRoundTrip(t *testing.T) {
 	token := "sample-token"
 	rawKey := bytes.Repeat([]byte{0x44}, 32)
@@ -220,6 +368,7 @@ func TestVerifyURLRoundTrip(t *testing.T) {
 	}
 }
 
+// TestDecryptMessageWithDocSample 使用官方样例密文验证解密兼容性。
 func TestDecryptMessageWithDocSample(t *testing.T) {
 	token := "QDG6eK"
 	encodingAESKey := "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C"

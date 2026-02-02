@@ -18,6 +18,7 @@ import (
 	"strings"
 )
 
+// padBlockSize 为企业微信协议指定的 PKCS#7 填充块大小（32 字节）。
 const padBlockSize = 32
 
 var (
@@ -29,9 +30,9 @@ var (
 
 // Crypt 封装企业微信的加解密逻辑。
 type Crypt struct {
-	token  string
-	aesKey []byte
-	corpID string
+	token  string // 企业微信回调配置的 Token
+	aesKey []byte // 32 字节 AES 密钥
+	corpID string // 企业 ID（用于校验消息归属）
 }
 
 // NewCrypt 创建一个新的 Crypt 实例，使用企业微信提供的 token、加密密钥与 corpID 作为上下文。
@@ -144,7 +145,7 @@ func (c *Crypt) DecryptMessage(msgSignature, timestamp, nonce string, req Encryp
 	}
 
 	// 第三步：将明文 JSON 解析为消息结构体。
-	msg, err := ParseMessage(plain)
+	msg, err := parseMessage(plain)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +173,7 @@ func (c *Crypt) DecryptMessage(msgSignature, timestamp, nonce string, req Encryp
 // 流程图：
 //
 //	[响应明文] -> [JSON序列化] -> [AES组包加密] -> [生成签名] -> [封装响应]
-func (c *Crypt) EncryptResponse(payload interface{}, timestamp, nonce string) (EncryptedResponse, error) {
+func (c *Crypt) EncryptResponse(payload any, timestamp, nonce string) (EncryptedResponse, error) {
 	// 第一步：将回复结构体序列化为 JSON 字节。
 	body, err := jsonMarshal(payload)
 	if err != nil {
@@ -444,7 +445,7 @@ func (c *Crypt) encrypt(plain []byte) (string, error) {
 	return base64.StdEncoding.EncodeToString(cipherData), nil
 }
 
-// jsonMarshal 抽象为函数便于测试时替换。
+// jsonMarshal 抽象为函数便于测试时替换（例如模拟序列化失败）。
 var jsonMarshal = func(v any) ([]byte, error) {
 	return json.Marshal(v)
 }

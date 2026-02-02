@@ -9,28 +9,26 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 ## Index
 
 - [Variables](<#variables>)
-- [type ActiveResponder](<#ActiveResponder>)
-- [type Adapter](<#Adapter>)
-- [type AdapterFunc](<#AdapterFunc>)
-  - [func \(f AdapterFunc\) Normalize\(raw interface\{\}\) \(Update, error\)](<#AdapterFunc.Normalize>)
+- [type Attachment](<#Attachment>)
+- [type AttachmentType](<#AttachmentType>)
+- [type Bot](<#Bot>)
 - [type Chain](<#Chain>)
   - [func NewChain\(defaultHandler Handler\) \*Chain](<#NewChain>)
   - [func \(c \*Chain\) AddRoute\(name string, matcher Matcher, handler Handler\)](<#Chain.AddRoute>)
-  - [func \(c \*Chain\) Trigger\(update Update, streamID string\) \<\-chan StreamChunk](<#Chain.Trigger>)
-- [type Emitter](<#Emitter>)
-- [type EmitterFunc](<#EmitterFunc>)
-  - [func \(f EmitterFunc\) Encode\(update Update, streamID string, chunk StreamChunk\) \(interface\{\}, error\)](<#EmitterFunc.Encode>)
+  - [func \(c \*Chain\) Trigger\(update RequestSnapshot\) \<\-chan StreamChunk](<#Chain.Trigger>)
+- [type ChatType](<#ChatType>)
 - [type Handler](<#Handler>)
 - [type Matcher](<#Matcher>)
   - [func MatchAny\(\) Matcher](<#MatchAny>)
   - [func MatchPrefix\(prefix string\) Matcher](<#MatchPrefix>)
 - [type PipelineFunc](<#PipelineFunc>)
-  - [func \(f PipelineFunc\) Trigger\(update Update, streamID string\) \<\-chan StreamChunk](<#PipelineFunc.Trigger>)
+  - [func \(f PipelineFunc\) Trigger\(update RequestSnapshot\) \<\-chan StreamChunk](<#PipelineFunc.Trigger>)
 - [type PipelineInvoker](<#PipelineInvoker>)
+- [type RequestSnapshot](<#RequestSnapshot>)
+  - [func \(r RequestSnapshot\) SaveAttachments\(dir string\) \(\[\]SavedAttachment, error\)](<#RequestSnapshot.SaveAttachments>)
 - [type Route](<#Route>)
+- [type SavedAttachment](<#SavedAttachment>)
 - [type StreamChunk](<#StreamChunk>)
-- [type Update](<#Update>)
-  - [func \(u Update\) CloneMetadata\(\) map\[string\]string](<#Update.CloneMetadata>)
 
 
 ## Variables
@@ -41,50 +39,64 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 var NoResponse = struct{}{}
 ```
 
-<a name="ActiveResponder"></a>
-## type ActiveResponder
+<a name="Attachment"></a>
+## type [Attachment](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L50-L53>)
 
-ActiveResponder 定义主动发送消息的能力。 接口设计为支持通用和特定类型的发送，方便使用。
+Attachment 描述平台无关的附件信息。
 
 ```go
-type ActiveResponder interface {
-    Send(responseURL string, msg interface{}) error
+type Attachment struct {
+    Type AttachmentType // 附件类型: image/file
+    URL  string         // 可下载的资源地址
+}
+```
+
+<a name="AttachmentType"></a>
+## type [AttachmentType](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L40>)
+
+AttachmentType 描述附件类型。
+
+```go
+type AttachmentType string
+```
+
+<a name="AttachmentTypeImage"></a>
+
+```go
+const (
+    // AttachmentTypeImage 表示图片附件。
+    AttachmentTypeImage AttachmentType = "image"
+    // AttachmentTypeFile 表示文件附件。
+    AttachmentTypeFile AttachmentType = "file"
+)
+```
+
+<a name="Bot"></a>
+## type [Bot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/bot.go#L4-L19>)
+
+Bot 抽象首包快照构建与响应编码能力。
+
+```go
+type Bot interface {
+    // BuildFirstSnapshot 生成首包快照。
+    BuildFirstSnapshot(raw any) (RequestSnapshot, error)
+
+    // BuildReply 将流式片段编码为平台响应。
+    BuildReply(firstSnapshot RequestSnapshot, chunk StreamChunk) (any, error)
+
+    // Send 向指定的 response_url 发送主动回复消息。
+    Send(responseURL string, msg any) error
+
+    // SendMarkdown 发送 Markdown 消息。
     SendMarkdown(responseURL, content string) error
-    SendTemplateCard(responseURL string, card interface{}) error
+
+    // SendTemplateCard 发送模板卡片消息。
+    SendTemplateCard(responseURL string, card any) error
 }
 ```
-
-<a name="Adapter"></a>
-## type Adapter
-
-Adapter 将平台原始消息映射为标准 Update。
-
-```go
-type Adapter interface {
-    Normalize(raw interface{}) (Update, error)
-}
-```
-
-<a name="AdapterFunc"></a>
-## type AdapterFunc
-
-AdapterFunc 允许直接以函数形式实现 Adapter。
-
-```go
-type AdapterFunc func(raw interface{}) (Update, error)
-```
-
-<a name="AdapterFunc.Normalize"></a>
-### func \(AdapterFunc\) Normalize
-
-```go
-func (f AdapterFunc) Normalize(raw interface{}) (Update, error)
-```
-
-Normalize 实现 Adapter 接口。
 
 <a name="Chain"></a>
-## type Chain
+## type [Chain](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L21-L24>)
 
 Chain 实现了一个基于责任链/路由表的 PipelineInvoker。 它按顺序检查路由，一旦匹配成功，就移交给对应的 Handler，并停止后续匹配。 如果所有路由都不匹配，且设置了 DefaultHandler，则调用 DefaultHandler。
 
@@ -95,7 +107,7 @@ type Chain struct {
 ```
 
 <a name="NewChain"></a>
-### func NewChain
+### func [NewChain](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L27>)
 
 ```go
 func NewChain(defaultHandler Handler) *Chain
@@ -104,7 +116,7 @@ func NewChain(defaultHandler Handler) *Chain
 NewChain 创建一个新的责任链路由器。
 
 <a name="Chain.AddRoute"></a>
-### func \(\*Chain\) AddRoute
+### func \(\*Chain\) [AddRoute](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L35>)
 
 ```go
 func (c *Chain) AddRoute(name string, matcher Matcher, handler Handler)
@@ -113,45 +125,34 @@ func (c *Chain) AddRoute(name string, matcher Matcher, handler Handler)
 AddRoute 添加一条路由规则。
 
 <a name="Chain.Trigger"></a>
-### func \(\*Chain\) Trigger
+### func \(\*Chain\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L44>)
 
 ```go
-func (c *Chain) Trigger(update Update, streamID string) <-chan StreamChunk
+func (c *Chain) Trigger(update RequestSnapshot) <-chan StreamChunk
 ```
 
 Trigger 实现 PipelineInvoker 接口。
 
-<a name="Emitter"></a>
-## type Emitter
+<a name="ChatType"></a>
+## type [ChatType](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L19>)
 
-Emitter 将流水线产生的流式片段转换为平台可用的响应。
-
-```go
-type Emitter interface {
-    Encode(update Update, streamID string, chunk StreamChunk) (interface{}, error)
-}
-```
-
-<a name="EmitterFunc"></a>
-## type EmitterFunc
-
-EmitterFunc 允许直接用函数实现。
+ChatType 描述会话类型枚举。
 
 ```go
-type EmitterFunc func(update Update, streamID string, chunk StreamChunk) (interface{}, error)
+type ChatType string
 ```
 
-<a name="EmitterFunc.Encode"></a>
-### func \(EmitterFunc\) Encode
+<a name="ChatTypeSingle"></a>
 
 ```go
-func (f EmitterFunc) Encode(update Update, streamID string, chunk StreamChunk) (interface{}, error)
+const (
+    ChatTypeSingle   ChatType = "single"   // 单聊
+    ChatTypeChatroom ChatType = "chatroom" // 群聊
+)
 ```
-
-Encode 实现 Emitter 接口。
 
 <a name="Handler"></a>
-## type Handler
+## type [Handler](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L9>)
 
 Handler 定义路由处理逻辑。 实际上就是 PipelineInvoker，为了语义清晰起见定义别名。
 
@@ -160,16 +161,16 @@ type Handler PipelineInvoker
 ```
 
 <a name="Matcher"></a>
-## type Matcher
+## type [Matcher](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L5>)
 
-Matcher 定义路由匹配逻辑。 返回 true 表示该路由应该处理此 Update。
+Matcher 定义路由匹配逻辑。 返回 true 表示该路由应该处理此首包快照。
 
 ```go
-type Matcher func(update Update) bool
+type Matcher func(update RequestSnapshot) bool
 ```
 
 <a name="MatchAny"></a>
-### func MatchAny
+### func [MatchAny](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L73>)
 
 ```go
 func MatchAny() Matcher
@@ -178,7 +179,7 @@ func MatchAny() Matcher
 MatchAny 返回一个总是匹配的 Matcher。
 
 <a name="MatchPrefix"></a>
-### func MatchPrefix
+### func [MatchPrefix](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L66>)
 
 ```go
 func MatchPrefix(prefix string) Matcher
@@ -187,36 +188,71 @@ func MatchPrefix(prefix string) Matcher
 MatchPrefix 返回一个匹配文本前缀的 Matcher。
 
 <a name="PipelineFunc"></a>
-## type PipelineFunc
+## type [PipelineFunc](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L20>)
 
 PipelineFunc 便于直接以函数充当 PipelineInvoker。
 
 ```go
-type PipelineFunc func(update Update, streamID string) <-chan StreamChunk
+type PipelineFunc func(update RequestSnapshot) <-chan StreamChunk
 ```
 
 <a name="PipelineFunc.Trigger"></a>
-### func \(PipelineFunc\) Trigger
+### func \(PipelineFunc\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L23>)
 
 ```go
-func (f PipelineFunc) Trigger(update Update, streamID string) <-chan StreamChunk
+func (f PipelineFunc) Trigger(update RequestSnapshot) <-chan StreamChunk
 ```
 
 Trigger 实现 PipelineInvoker 接口。
 
 <a name="PipelineInvoker"></a>
-## type PipelineInvoker
+## type [PipelineInvoker](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L15-L17>)
 
 PipelineInvoker 抽象命令/业务执行器。
 
 ```go
 type PipelineInvoker interface {
-    Trigger(update Update, streamID string) <-chan StreamChunk
+    Trigger(update RequestSnapshot) <-chan StreamChunk
 }
 ```
 
+<a name="RequestSnapshot"></a>
+## type [RequestSnapshot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L27-L37>)
+
+RequestSnapshot 描述首包请求的标准化快照。
+
+```go
+type RequestSnapshot struct {
+    ID          string            // 平台内的唯一消息、事件或流会话 ID
+    SenderID    string            // 触发用户标识
+    ChatID      string            // 会话 ID（群、私聊等）
+    ChatType    ChatType          // 会话类型，示例：single/chatroom（企业微信为 single/group，内部映射为 chatroom）
+    Text        string            // 主要文本内容（若适用）
+    Attachments []Attachment      // 标准化附件列表（图片/文件等）
+    Raw         any               // 平台原始结构引用，便于 Handler 深度使用
+    ResponseURL string            // 主动回复 URL（部分平台返回）
+    Metadata    map[string]string // 扩展键值，如语言、平台等
+}
+```
+
+<a name="RequestSnapshot.SaveAttachments"></a>
+### func \(RequestSnapshot\) [SaveAttachments](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L69>)
+
+```go
+func (r RequestSnapshot) SaveAttachments(dir string) ([]SavedAttachment, error)
+```
+
+SaveAttachments 下载并保存所有附件到指定目录。 Parameters:
+
+- dir: 保存目录（不存在会创建）
+
+Returns:
+
+- \[\]SavedAttachment: 每个附件的保存结果
+- error: 只要有任意附件失败则返回非空错误
+
 <a name="Route"></a>
-## type Route
+## type [Route](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/router.go#L12-L16>)
 
 Route 定义单条路由规则。
 
@@ -228,43 +264,30 @@ type Route struct {
 }
 ```
 
+<a name="SavedAttachment"></a>
+## type [SavedAttachment](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L56-L60>)
+
+SavedAttachment 表示附件保存结果。
+
+```go
+type SavedAttachment struct {
+    Attachment Attachment // 原始附件信息
+    Path       string     // 保存后的本地路径
+    Err        error      // 单个附件的错误（若有）
+}
+```
+
 <a name="StreamChunk"></a>
-## type StreamChunk
+## type [StreamChunk](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L4-L8>)
 
 StreamChunk 描述流式输出片段。
 
 ```go
 type StreamChunk struct {
     Content string
-    Payload interface{} // 扩展：支持携带复杂对象（如 TemplateCard），用于非流式回复
+    Payload any // 扩展：支持携带复杂对象（如 TemplateCard），用于非流式回复
     IsFinal bool
 }
 ```
-
-<a name="Update"></a>
-## type Update
-
-Update 描述任意聊天/机器人平台上的标准化事件。
-
-```go
-type Update struct {
-    ID       string            // 平台内的唯一消息或事件 ID
-    SenderID string            // 触发用户标识
-    ChatID   string            // 会话 ID（群、私聊等）
-    ChatType string            // 会话类型，示例：single/chatroom
-    Text     string            // 主要文本内容（若适用）
-    Raw      interface{}       // 平台原始结构引用，便于 Handler 深度使用
-    Metadata map[string]string // 扩展键值，如语言、平台等
-}
-```
-
-<a name="Update.CloneMetadata"></a>
-### func \(Update\) CloneMetadata
-
-```go
-func (u Update) CloneMetadata() map[string]string
-```
-
-CloneMetadata 返回一份 Metadata 拷贝，防止 Handler 意外修改底层数据。
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)

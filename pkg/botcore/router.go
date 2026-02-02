@@ -1,8 +1,8 @@
 package botcore
 
 // Matcher 定义路由匹配逻辑。
-// 返回 true 表示该路由应该处理此 Update。
-type Matcher func(update Update) bool
+// 返回 true 表示该路由应该处理此首包快照。
+type Matcher func(update RequestSnapshot) bool
 
 // Handler 定义路由处理逻辑。
 // 实际上就是 PipelineInvoker，为了语义清晰起见定义别名。
@@ -41,37 +41,37 @@ func (c *Chain) AddRoute(name string, matcher Matcher, handler Handler) {
 }
 
 // Trigger 实现 PipelineInvoker 接口。
-func (c *Chain) Trigger(update Update, streamID string) <-chan StreamChunk {
+func (c *Chain) Trigger(update RequestSnapshot) <-chan StreamChunk {
 	// 1. 遍历路由表
 	for _, route := range c.routes {
 		if route.Matcher(update) {
 			// 匹配成功，移交控制权
-			return route.Handler.Trigger(update, streamID)
+			return route.Handler.Trigger(update)
 		}
 	}
 
 	// 2. 没有任何匹配，使用默认处理器
 	if c.defaultHandler != nil {
-		return c.defaultHandler.Trigger(update, streamID)
+		return c.defaultHandler.Trigger(update)
 	}
 
 	// 3. 既无匹配也无默认处理器，返回空流 (静默)
 	return nil
 }
 
-// ContextMatcher 辅助函数：创建一个基于上下文的 Matcher (预留接口，目前 Update 中主要是 Text)
+// ContextMatcher 辅助函数：创建一个基于上下文的 Matcher (预留接口，目前快照中主要是 Text)
 // 这里提供一些常用的 Matcher 构造器
 
 // MatchPrefix 返回一个匹配文本前缀的 Matcher。
 func MatchPrefix(prefix string) Matcher {
-	return func(u Update) bool {
+	return func(u RequestSnapshot) bool {
 		return len(u.Text) >= len(prefix) && u.Text[0:len(prefix)] == prefix
 	}
 }
 
 // MatchAny 返回一个总是匹配的 Matcher。
 func MatchAny() Matcher {
-	return func(u Update) bool {
+	return func(u RequestSnapshot) bool {
 		return true
 	}
 }

@@ -1,10 +1,14 @@
 package wecom
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
-	"sync"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
@@ -17,73 +21,45 @@ var (
 
 // Bot 集成企业微信回调处理与流式响应逻辑。
 // Fields:
-//   - Streams: 管理流式会话生命周期的 StreamManager
-//   - Crypto: 负责签名校验与加解密的 Crypt
-//   - Pipeline: 首包触发的业务流水线实现，可为空
-//   - Timeout: 刷新请求等待流水线片段的最大时长
+//   - streamMgr: 管理流式会话生命周期的 StreamManager
+//   - crypto: 负责签名校验与加解密的 Crypt
+//   - client: 主动回复客户端，负责向 response_url 发送消息
+//   - pipeline: 首包触发的业务流水线实现，可为空
 type Bot struct {
-	Streams *StreamManager
-	Crypto  *Crypt
+	streamMgr *StreamManager
+	crypto    *Crypt
+	client    *http.Client
 
-	Pipeline botcore.PipelineInvoker
-	Adapter  botcore.Adapter
-	Emitter  botcore.Emitter
-	Timeout  time.Duration
-
-	fallback sync.Map // msgid -> botcore.StreamChunk，用于记录未及时下发的最终片段。
-}
-
-// BotOption 用于定制 Bot 行为。
-type BotOption func(*Bot)
-
-// WithAdapter 自定义消息标准化适配器。
-func WithAdapter(adapter botcore.Adapter) BotOption {
-	return func(b *Bot) {
-		b.Adapter = adapter
-	}
-}
-
-// WithEmitter 覆盖默认的流式响应构造器。
-func WithEmitter(emitter botcore.Emitter) BotOption {
-	return func(b *Bot) {
-		b.Emitter = emitter
-	}
+	pipeline botcore.PipelineInvoker
 }
 
 // NewBot 根据给定参数创建 Bot。
 // Parameters:
-//   - crypto: 企业微信加解密上下文，不能为空
-//   - sessionTTL: 会话最大存活时间（<=0 时使用 StreamManager 默认值）
-//   - timeout: 刷新请求等待流水线片段的最大时长（<=0 时在 Refresh 内回退默认值）
+//   - token: 企业微信配置的消息校验 Token
+//   - encodingAESKey: 企业微信后台生成的 43 字节 Base64 编码字符串
+//   - corpID: 企业 ID，用于校验消息归属
+//   - sessionTTL: 流式会话最大存活时间（<=0 时使用 StreamManager 默认值）
+//   - streamWaitTimeout: 刷新请求等待流水线片段的最大时长（<=0 时使用 StreamManager 默认值）
 //   - pipeline: 首包触发的业务流水线实现，可为 nil
 //
 // Returns:
 //   - *Bot: 成功初始化的 Bot 实例
-//   - error: 当 crypto 为空时返回错误
-func NewBot(crypto *Crypt, sessionTTL, timeout time.Duration, pipeline botcore.PipelineInvoker, opts ...BotOption) (*Bot, error) {
-	if crypto == nil {
-		return nil, errors.New("crypto is required")
+//   - error: 当加解密上下文初始化失败时返回错误
+func NewBot(token, encodingAESKey, corpID string, streamMsgTTL, streamWaitTimeout time.Duration, pipeline botcore.PipelineInvoker) (*Bot, error) {
+	// 关键步骤：在构造 Bot 之前先初始化加解密上下文。
+	crypto, err := NewCrypt(token, encodingAESKey, corpID)
+	if err != nil {
+		return nil, err
 	}
 
-	sessions := NewStreamManager(sessionTTL)
-	bot := &Bot{
-		Streams:  sessions,
-		Crypto:   crypto,
-		Pipeline: pipeline,
-		Timeout:  timeout,
-	}
-	for _, opt := range opts {
-		if opt != nil {
-			opt(bot)
-		}
-	}
-	if bot.Adapter == nil {
-		bot.Adapter = MessageAdapter{}
-	}
-	if bot.Emitter == nil {
-		bot.Emitter = StreamEmitter{}
-	}
-	return bot, nil
+	return &Bot{
+		streamMgr: newStreamManager(streamMsgTTL, streamWaitTimeout),
+		crypto:    crypto,
+		client: &http.Client{
+			Timeout: resolveDuration(0, envBotHTTPTimeout, 10*time.Second),
+		},
+		pipeline: pipeline,
+	}, nil
 }
 
 // ServeHTTP 实现 http.Handler 接口，根据请求方法转发至不同处理逻辑。
@@ -109,7 +85,7 @@ func (b *Bot) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //   - w: http.ResponseWriter，用于输出验证明文
 //   - r: *http.Request，包含企业微信回调参数
 func (b *Bot) handleGet(w http.ResponseWriter, r *http.Request) {
-	if b == nil || b.Crypto == nil {
+	if b == nil || b.crypto == nil {
 		http.Error(w, "server misconfigured", http.StatusInternalServerError)
 		return
 	}
@@ -126,7 +102,7 @@ func (b *Bot) handleGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 第二步：调用加解密模块完成签名验证与明文解密。
-	plain, err := b.Crypto.VerifyURL(sig, ts, nonce, echostr)
+	plain, err := b.crypto.VerifyURL(sig, ts, nonce, echostr)
 	if err != nil {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
@@ -152,18 +128,18 @@ func (b *Bot) handleGet(w http.ResponseWriter, r *http.Request) {
 //	[解析JSON体] -> [解密消息]
 //	     |
 //	     v
-//	[首次?] -> [Bot.Initial] / [Bot.Refresh]
+//	[首次?] -> [Bot.initial] / [Bot.refresh]
 //	     |
 //	     v
 //	[JSON序列化响应] -> [写回加密包]
 func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
-	if b == nil || b.Crypto == nil || b.Streams == nil {
+	if b == nil || b.crypto == nil || b.streamMgr == nil {
 		http.Error(w, "server misconfigured", http.StatusInternalServerError)
 		return
 	}
 
 	// 第一步：请求开始前清理过期会话，避免资源堆积。
-	b.Cleanup() // 每次请求前清理过期会话，防止堆积
+	b.cleanup() // 每次请求前清理过期会话，防止堆积
 	query := r.URL.Query()
 	sig := query.Get("msg_signature")
 	ts := query.Get("timestamp")
@@ -186,7 +162,7 @@ func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 第三步：解密业务消息，进入业务处理阶段。
-	msg, err := b.Crypto.DecryptMessage(sig, ts, nonce, req)
+	msg, err := b.crypto.DecryptMessage(sig, ts, nonce, req)
 	if err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
@@ -200,13 +176,13 @@ func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
 	// 第四步：区分首次或刷新场景，由 Bot 内部流式逻辑产出响应体。
 	var resp EncryptedResponse
 	if msg.MsgType == "stream" {
-		resp, err = b.Refresh(msg, ts, nonce) // 流式刷新请求
+		resp, err = b.refresh(msg, ts, nonce) // 流式刷新请求
 	} else {
-		resp, err = b.Initial(msg, ts, nonce) // 首包或非流式请求
+		resp, err = b.initial(msg, ts, nonce) // 首包或非流式请求
 	}
 
 	// 特殊处理：业务层明确要求不回复
-	if err == ErrNoResponse {
+	if errors.Is(err, ErrNoResponse) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -226,7 +202,7 @@ func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-// Initial 处理首次回调，创建流式会话并触发业务流水线。
+// initial 处理首次回调，创建流式会话并触发业务流水线。
 // Parameters:
 //   - msg: 企业微信解密后的消息
 //   - timestamp: 调用方传入的时间戳字符串
@@ -238,90 +214,39 @@ func (b *Bot) handlePost(w http.ResponseWriter, r *http.Request) {
 //
 // 流程图：
 //
-//	[创建/复用会话] -> [触发流水线] -> [等待首帧] -> [有数据?] --是--> [Payload?] -> [直接回复]
-//	                                         |          \
-//	                                         |           -> [Stream?] -> [首包携带内容] -> [后台消费剩余]
-//	                                         |
-//	                                         -> [超时/无数据] -> [返回空StreamStart] -> [后台消费]
-func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse, error) {
-	if b.Adapter == nil {
-		return EncryptedResponse{}, errors.New("adapter not configured")
-	}
-	update, err := b.Adapter.Normalize(msg)
+//	[创建/复用会话] -> [触发流水线] -> [后台消费输出]
+//	                     |
+//	                     v
+//	              [返回空Stream ACK]
+func (b *Bot) initial(msg *Message, timestamp, nonce string) (EncryptedResponse, error) {
+	firstSnapshot, err := b.BuildFirstSnapshot(msg)
 	if err != nil {
 		return EncryptedResponse{}, err
 	}
 
 	// 第一步：创建或复用流式会话。
-	session, isNew := b.Streams.CreateOrGet(msg)
-	b.Streams.SetUpdate(session.StreamID, update)
+	stream, isNew := b.streamMgr.createOrGet(msg)
+	firstSnapshot.ID = stream.StreamID // 关键步骤：企业微信以 streamID 标识流式会话，这里统一写入快照 ID。
+	b.streamMgr.setFirstSnapshot(stream.StreamID, firstSnapshot)
 
-	// 默认首包（空流式开始）
-	initialChunk := botcore.StreamChunk{Content: "", IsFinal: false}
-
-	if isNew && b.Pipeline != nil {
-		outCh := b.Pipeline.Trigger(update, session.StreamID)
+	// 关键步骤：首包只负责触发流水线并返回空 ACK，内容由 refresh 拉取。
+	if isNew && b.pipeline != nil {
+		outCh := b.pipeline.Trigger(firstSnapshot)
 		if outCh != nil {
-			// 尝试同步等待第一帧，优化首字体验或支持同步响应
-			select {
-			case chunk, ok := <-outCh:
-				if ok {
-					// Case 0: 静默信号
-					if chunk.Payload == botcore.NoResponse {
-						b.Streams.MarkFinished(session.StreamID)
-						return EncryptedResponse{}, ErrNoResponse
-					}
-
-					if chunk.Payload != nil {
-						// Case 1: 非流式 Payload（如 TemplateCard），直接一次性响应
-						// 这种情况下通常意味着对话结束，或者是独立的事件响应
-						if chunk.IsFinal {
-							b.Streams.MarkFinished(session.StreamID)
-						}
-						// 如果还有后续数据，需启动后台消费（虽然对于 Payload 响应通常不应有后续）
-						go b.consumePipeline(outCh, msg.MsgID, session.StreamID)
-
-						reply, err := b.buildReply(update, session.StreamID, chunk)
-						if err != nil {
-							return EncryptedResponse{}, err
-						}
-						return b.Crypto.EncryptResponse(reply, timestamp, nonce)
-					}
-
-					// Case 2: 流式内容，首包携带数据
-					// 注意：这里不将 chunk push 到 session，因为我们直接在 Initial 返回了
-					// 后续的 Refresh 将消费后续的帧
-					b.Streams.Accumulate(session.StreamID, chunk.Content)
-					initialChunk = chunk
-					if chunk.IsFinal {
-						b.Streams.MarkFinished(session.StreamID)
-					}
-					// 启动后台消费剩余帧
-					go b.consumePipeline(outCh, msg.MsgID, session.StreamID)
-				} else {
-					// Channel closed immediately
-					b.Streams.MarkFinished(session.StreamID)
-					initialChunk = botcore.StreamChunk{Content: "", IsFinal: true}
-				}
-			case <-time.After(200 * time.Millisecond):
-				// Case 3: 超时未产出，转后台消费，Initial 返回空包
-				// 注意：这里存在一个微小的竞态条件，如果此时 outCh 刚好有数据，
-				// 可能会被后台协程抢占。但由于 Initial 已经决定返回空包，
-				// 后续数据通过 Refresh 获取也是符合预期的。
-				go b.consumePipeline(outCh, msg.MsgID, session.StreamID)
-			}
+			// 后台消费流水线输出，由 refresh 统一返回内容。
+			go b.doPipeline(outCh, stream.StreamID)
 		}
 	}
 
-	// 第三步：构造首包（可能是空的，也可能包含第一帧文本）
-	reply, err := b.buildReply(update, session.StreamID, initialChunk)
+	// 第三步：构造首包 ACK（始终为空内容）
+	reply, err := b.BuildReply(firstSnapshot, botcore.StreamChunk{Content: "", IsFinal: false})
 	if err != nil {
 		return EncryptedResponse{}, err
 	}
-	return b.Crypto.EncryptResponse(reply, timestamp, nonce)
+	return b.crypto.EncryptResponse(reply, timestamp, nonce)
 }
 
-// Refresh 处理企业微信的流式刷新请求。
+// refresh 处理企业微信的流式刷新请求。
 // Parameters:
 //   - msg: 企业微信回调中的流式刷新消息
 //   - timestamp: 调用方传入的时间戳字符串
@@ -344,19 +269,19 @@ func (b *Bot) Initial(msg *Message, timestamp, nonce string) (EncryptedResponse,
 //
 //	|
 //
-// 取到片段? —否→ [fallback命中?] —否→ [返回空Refresh]
+// 取到片段? —否→ [返回空Refresh]
 //
-//	 |                        |
-//	是                        是
-//	 |                        |
+//	 |
+//	是
+//	 |
 //
-// [标记完成(若final)]         [使用fallback片段]
+// [标记完成(若final)]
 //
 //	|
 //	v
 //
 // [加密并返回]
-func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse, error) {
+func (b *Bot) refresh(msg *Message, timestamp, nonce string) (EncryptedResponse, error) {
 	// 第一步：提取 streamID，判定是否为有效流式刷新请求。
 	streamID := ""
 	if msg.Stream != nil {
@@ -364,152 +289,339 @@ func (b *Bot) Refresh(msg *Message, timestamp, nonce string) (EncryptedResponse,
 	}
 	if streamID == "" {
 		// 无效 streamID 直接返回终止包，告知客户端结束。
-		reply, err := b.buildReply(botcore.Update{}, "", botcore.StreamChunk{Content: "", IsFinal: true})
+		reply, err := b.BuildReply(botcore.RequestSnapshot{}, botcore.StreamChunk{Content: "", IsFinal: true})
 		if err != nil {
 			return EncryptedResponse{}, err
 		}
-		return b.Crypto.EncryptResponse(reply, timestamp, nonce)
+		return b.crypto.EncryptResponse(reply, timestamp, nonce)
 	}
 
-	// 第二步：设置等待窗口，从会话中阻塞消费片段。
-	timeout := b.Timeout
-	if timeout <= 0 {
-		timeout = 500 * time.Millisecond
-	}
-	chunk := b.Streams.Consume(streamID, timeout) // 阻塞等待流水线产出
-	if chunk == nil {
-		// 第三步：消费失败时尝试回退到 fallback，保证终止片段可达。
-		if msg.MsgID != "" {
-			if cached, ok := b.fallback.LoadAndDelete(msg.MsgID); ok {
-				if stored, ok := cached.(botcore.StreamChunk); ok {
-					chunk = &stored
-				}
-			}
-		}
-	}
+	// 第二步：从会话中获取最新累计片段与首包快照。
+	firstSnapshot, chunk := b.streamMgr.getLatestChunk(streamID)
 	if chunk == nil {
 		// 无片段可用，返回保持连接的空包。
-		update := b.Streams.GetUpdate(streamID)
-		reply, err := b.buildReply(update, streamID, botcore.StreamChunk{Content: "", IsFinal: false})
+		reply, err := b.BuildReply(firstSnapshot, botcore.StreamChunk{Content: "", IsFinal: false})
 		if err != nil {
 			return EncryptedResponse{}, err
 		}
-		return b.Crypto.EncryptResponse(reply, timestamp, nonce)
+		return b.crypto.EncryptResponse(reply, timestamp, nonce)
 	}
 	if chunk.IsFinal {
 		// 最终片段需标记会话完成，避免资源泄露。
-		b.Streams.MarkFinished(streamID)
+		b.streamMgr.markFinished(streamID)
 	}
 
 	// 第四步：将片段封装为流式响应并加密返回。
-	update := b.Streams.GetUpdate(streamID)
-	reply, err := b.buildReply(update, streamID, *chunk)
+	reply, err := b.BuildReply(firstSnapshot, *chunk)
 	if err != nil {
 		return EncryptedResponse{}, err
 	}
-	return b.Crypto.EncryptResponse(reply, timestamp, nonce)
+	return b.crypto.EncryptResponse(reply, timestamp, nonce)
 }
 
-// PushStreamChunk 将流水线片段推送到对应 stream 会话。
-// Parameters:
-//   - msgID: 企业微信消息 ID，用于定位会话
-//   - content: 流水线产生的文本
-//   - isFinal: 是否为最终片段
-//
-// Returns:
-//   - bool: 表示是否成功投递到会话或缓存
-//
-// 流程图：
-//
-//	[查找streamID]
-//	     |
-//	找到?  --否--> [final?] --是--> [缓存fallback] --否--> [返回false]
-//	     |
-//	    是
-//	     |
-//	[构造chunk并尝试Publish] --失败--> [如final则缓存fallback]
-//	     |
-//	    成功
-//	     |
-//	[final?] --是--> [标记会话完成]
-//	     |
-//	    返回true
-func (b *Bot) pushStreamChunk(streamID, msgID string, chunk botcore.StreamChunk) bool {
-	target := streamID
-	if target == "" && msgID != "" {
-		if located, ok := b.Streams.GetStreamIDByMsg(msgID); ok {
-			target = located
-		}
-	}
-	if target == "" {
-		return b.cacheFallback(msgID, chunk)
-	}
-	if !b.Streams.Publish(target, chunk) {
-		return b.cacheFallback(msgID, chunk)
-	}
-	if chunk.IsFinal {
-		b.Streams.MarkFinished(target)
-	}
-	return true
-}
-
-func (b *Bot) cacheFallback(msgID string, chunk botcore.StreamChunk) bool {
-	// 仅缓存终结片段：当刷新请求找不到会话或 Publish 失败时，
-	// 通过 msgID 兜底返回最终结果，保证企业微信侧能收到结束信号。
-	if chunk.IsFinal && msgID != "" {
-		b.fallback.Store(msgID, chunk)
-	}
-	return false
-}
-
-// PushStreamChunk 兼容旧接口，便于在流水线外部直接推送片段。
-func (b *Bot) PushStreamChunk(msgID, content string, isFinal bool) bool {
-	return b.pushStreamChunk("", msgID, botcore.StreamChunk{Content: content, IsFinal: isFinal})
-}
-
-// SetFinalMessage 在非流式场景下缓存最终结果以备刷新，找不到会话时写入 fallback。
+// setFinalMessage 在非流式场景下尝试投递最终结果（仅在会话存在时生效）。
 // Parameters:
 //   - msgID: 企业微信消息 ID
 //   - content: 业务最终结果
-func (b *Bot) SetFinalMessage(msgID, content string) {
+func (b *Bot) setFinalMessage(msgID, content string) {
+	if msgID == "" {
+		return
+	}
+	streamID, ok := b.streamMgr.getStreamIDByMsg(msgID)
+	if !ok || streamID == "" {
+		return
+	}
 	chunk := botcore.StreamChunk{Content: content, IsFinal: true}
-	b.pushStreamChunk("", msgID, chunk)
+	b.streamMgr.publish(streamID, chunk)
 }
 
-// Cleanup 清理过期会话，防止 Session 过度累积。
-func (b *Bot) Cleanup() {
-	if b == nil || b.Streams == nil {
+// cleanup 清理过期会话，防止 Session 过度累积。
+func (b *Bot) cleanup() {
+	if b == nil || b.streamMgr == nil {
 		return
 	}
 
 	// 委托 StreamManager 移除超时会话。
-	b.Streams.Cleanup()
+	b.streamMgr.cleanup()
 }
 
-func (b *Bot) consumePipeline(outCh <-chan botcore.StreamChunk, msgID, streamID string) {
+// doPipeline 消费流水线输出并发布到流式会话。
+// Parameters:
+//   - outCh: 流水线输出通道
+//   - streamID: 目标流式会话 ID
+//
+// 说明：
+//   - NoResponse 代表立即结束会话
+//   - 若无任何输出，则发送空终止片段避免 refresh 无限轮询
+func (b *Bot) doPipeline(outCh <-chan botcore.StreamChunk, streamID string) {
 	if outCh == nil {
 		return
 	}
+
+	published := false
 	for chunk := range outCh {
+		// 关键步骤：NoResponse 在流式场景中等价于“立即结束”。
+		if chunk.Payload == botcore.NoResponse {
+			if b.streamMgr.publish(streamID, botcore.StreamChunk{Content: "", IsFinal: true}) {
+				published = true
+			}
+			return
+		}
 		if chunk.Content == "" && chunk.Payload == nil && !chunk.IsFinal {
 			continue
 		}
-		b.pushStreamChunk(streamID, msgID, chunk)
+
+		if b.streamMgr.publish(streamID, chunk) {
+			published = true
+		}
+	}
+	if !published {
+		// 无输出也要结束会话，避免 refresh 无限轮询。
+		b.streamMgr.publish(streamID, botcore.StreamChunk{Content: "", IsFinal: true})
 	}
 }
 
-func (b *Bot) buildReply(update botcore.Update, streamID string, chunk botcore.StreamChunk) (interface{}, error) {
+// mapWecomChatType 将企业微信 chattype 规范化为内部标准类型。
+// Parameters:
+//   - raw: 企业微信回调中的原始 chattype 字符串
+//
+// Returns:
+//   - botcore.ChatType: 标准化后的会话类型
+func mapWecomChatType(raw string) botcore.ChatType {
+	// 关键步骤：统一大小写并剔除空白，避免上游传入非规范值。
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	switch normalized {
+	case "single":
+		return botcore.ChatTypeSingle
+	case "group", "chatroom":
+		return botcore.ChatTypeChatroom
+	default:
+		return botcore.ChatType(raw)
+	}
+}
+
+// BuildFirstSnapshot 构建首包快照。
+// Parameters:
+//   - raw: 平台原始消息结构
+//
+// Returns:
+//   - botcore.RequestSnapshot: 标准化首包快照
+//   - error: 构建失败时返回
+func (b *Bot) BuildFirstSnapshot(raw any) (botcore.RequestSnapshot, error) {
+	msg, ok := raw.(*Message)
+	if !ok || msg == nil {
+		return botcore.RequestSnapshot{}, errors.New("invalid wecom message")
+	}
+
+	text := ""
+	if msg.Text != nil {
+		text = msg.Text.Content
+	}
+
+	// metadata 约定键：platform/msgtype/response_url/stream_id/event_type/task_id/feedback_* 等。
+	meta := map[string]string{
+		"platform":     "wecom",
+		"msgtype":      msg.MsgType,
+		"response_url": msg.ResponseURL,
+	}
+	if msg.Stream != nil {
+		meta["stream_id"] = msg.Stream.ID
+	}
+
+	// 处理事件类型
+	if msg.MsgType == "event" && msg.Event != nil {
+		meta["event_type"] = msg.Event.EventType
+
+		if msg.Event.EnterChat != nil {
+			// 进入会话事件：不再生成隐式指令，由上层根据 event_type 处理。
+		} else if msg.Event.TemplateCardEvent != nil {
+			// 模板卡片事件
+			cardEvent := msg.Event.TemplateCardEvent
+			if cardEvent.EventKey != "" {
+				// 将 Key 视为指令文本，便于 CommandManager 路由。
+				text = cardEvent.EventKey
+			}
+			if cardEvent.TaskID != "" {
+				meta["task_id"] = cardEvent.TaskID
+			}
+		} else if msg.Event.FeedbackEvent != nil {
+			// 反馈事件
+			feedback := msg.Event.FeedbackEvent
+			// 关键步骤：将反馈事件字段写入 metadata，供业务层使用。
+			meta["feedback_id"] = feedback.ID
+			meta["feedback_type"] = strconv.Itoa(feedback.Type)
+			if feedback.Content != "" {
+				meta["feedback_content"] = feedback.Content
+			}
+		}
+	}
+
+	attachments := make([]botcore.Attachment, 0)
+	addAttachment := func(attType botcore.AttachmentType, url string) {
+		if strings.TrimSpace(url) == "" {
+			return
+		}
+		attachments = append(attachments, botcore.Attachment{Type: attType, URL: url})
+	}
+
+	// 关键步骤：从消息体中抽取图片/文件附件。
+	switch msg.MsgType {
+	case "image":
+		if msg.Image != nil {
+			addAttachment(botcore.AttachmentTypeImage, msg.Image.URL)
+		}
+	case "file":
+		if msg.File != nil {
+			addAttachment(botcore.AttachmentTypeFile, msg.File.URL)
+		}
+	case "mixed":
+		if msg.Mixed != nil {
+			for _, item := range msg.Mixed.Items {
+				if item.MsgType == "image" && item.Image != nil {
+					addAttachment(botcore.AttachmentTypeImage, item.Image.URL)
+				}
+			}
+		}
+	}
+
+	// 引用消息中的附件也纳入统一列表。
+	if msg.Quote != nil {
+		switch msg.Quote.MsgType {
+		case "image":
+			if msg.Quote.Image != nil {
+				addAttachment(botcore.AttachmentTypeImage, msg.Quote.Image.URL)
+			}
+		case "file":
+			if msg.Quote.File != nil {
+				addAttachment(botcore.AttachmentTypeFile, msg.Quote.File.URL)
+			}
+		case "mixed":
+			if msg.Quote.Mixed != nil {
+				for _, item := range msg.Quote.Mixed.Items {
+					if item.MsgType == "image" && item.Image != nil {
+						addAttachment(botcore.AttachmentTypeImage, item.Image.URL)
+					}
+				}
+			}
+		}
+	}
+
+	return botcore.RequestSnapshot{
+		ID:          "",
+		SenderID:    msg.From.UserID,
+		ChatID:      msg.ChatID,
+		ChatType:    mapWecomChatType(msg.ChatType),
+		Text:        text,
+		Attachments: attachments,
+		Raw:         msg,
+		ResponseURL: msg.ResponseURL,
+		Metadata:    meta,
+	}, nil
+}
+
+// Send 向指定的 response_url 发送主动回复消息。
+// 对应文档：7_加解密说明.md - 如何主动回复消息
+// 注意：response_url 有效期为 1 小时，且每个 url 仅可调用一次。
+// Parameters:
+//   - responseURL: 企业微信回调中提供的 response_url
+//   - msg: 待发送的消息负载（会被序列化为 JSON）
+//
+// Returns:
+//   - error: 发送失败或序列化失败时返回
+func (b *Bot) Send(responseURL string, msg any) error {
+	if responseURL == "" {
+		return fmt.Errorf("response_url is empty")
+	}
+
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("marshal message: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, responseURL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := b.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("do request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("wecom api error: status=%d body=%s", resp.StatusCode, string(respBody))
+	}
+
+	// 企业微信 API 通常返回 JSON，包含 errcode。这里简单检查 status code。
+	// 如果需要更严格的错误检查，可以解析 respBody 中的 errcode。
+	return nil
+}
+
+// MarkdownMessage 主动回复 Markdown 消息结构。
+type MarkdownMessage struct {
+	MsgType  string          `json:"msgtype"` // markdown
+	Markdown MarkdownPayload `json:"markdown"`
+}
+
+// MarkdownPayload 表示 Markdown 消息体内容。
+type MarkdownPayload struct {
+	Content  string        `json:"content"`            // Markdown 文本内容
+	Feedback *FeedbackInfo `json:"feedback,omitempty"` // 可选反馈信息
+}
+
+// SendMarkdown 发送 Markdown 消息。
+// Parameters:
+//   - responseURL: 企业微信回调中提供的 response_url
+//   - content: Markdown 文本内容
+//
+// Returns:
+//   - error: 发送失败时返回
+func (b *Bot) SendMarkdown(responseURL, content string) error {
+	msg := MarkdownMessage{
+		MsgType: "markdown",
+		Markdown: MarkdownPayload{
+			Content: content,
+		},
+	}
+	return b.Send(responseURL, msg)
+}
+
+// SendTemplateCard 发送模板卡片消息。
+// Parameters:
+//   - responseURL: 企业微信回调中提供的 response_url
+//   - card: 模板卡片负载（需为 *TemplateCard）
+//
+// Returns:
+//   - error: 发送失败或类型不匹配时返回
+func (b *Bot) SendTemplateCard(responseURL string, card any) error {
+	typedCard, ok := card.(*TemplateCard)
+	if !ok {
+		return fmt.Errorf("invalid card type: expected *TemplateCard, got %T", card)
+	}
+	msg := TemplateCardMessage{
+		MsgType:      "template_card",
+		TemplateCard: typedCard,
+	}
+	return b.Send(responseURL, msg)
+}
+
+// BuildReply 将流式片段编码为平台响应。
+// Parameters:
+//   - snapshot: 首包快照
+//   - chunk: 流式片段
+//
+// Returns:
+//   - any: 平台响应负载
+//   - error: 编码失败时返回
+func (b *Bot) BuildReply(firstSnapshot botcore.RequestSnapshot, chunk botcore.StreamChunk) (any, error) {
 	// 优先处理携带的非流式 Payload
 	if chunk.Payload != nil {
 		return chunk.Payload, nil
 	}
 
-	if b == nil || b.Emitter == nil {
-		return BuildStreamReply(streamID, chunk.Content, chunk.IsFinal), nil
-	}
-	payload, err := b.Emitter.Encode(update, streamID, chunk)
-	if err != nil {
-		return nil, err
-	}
-	return payload, nil
+	return buildStreamReply(firstSnapshot.ID, chunk.Content, chunk.IsFinal), nil
 }

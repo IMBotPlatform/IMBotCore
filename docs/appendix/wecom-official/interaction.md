@@ -19,9 +19,9 @@
 ### 1.2 接收事件 (Bot 接收)
 | 事件场景 | `EventType` | 对应结构体 | 默认路由行为 |
 | :--- | :--- | :--- | :--- |
-| **进入会话** | `enter_chat` | `EnterChat` | 自动路由为 `/welcome` 指令 |
+| **进入会话** | `enter_chat` | `EnterChat` | 不自动路由，交由上层按 `event_type` 处理 |
 | **模板卡片交互** | `template_card_event` | `TemplateCardEvent` | 将 `event_key` 作为指令执行 (e.g. `/click`) |
-| **用户反馈** | `feedback_event` | `FeedbackEvent` | 仅记录，需自定义处理 |
+| **用户反馈** | `feedback_event` | `FeedbackEvent` | 默认直接 200，不进入 pipeline（需处理可自行改造） |
 
 ### 1.3 被动回复 (同步 HTTP 响应)
 | 类型 | 字段 (`MsgType`) | 结构体 | 适用场景 |
@@ -72,7 +72,7 @@ func Run(cmd *cobra.Command, args []string) {
 
     // 2. 使用 Responder 主动推送消息 (异步)
     responder := ctx.Responder()
-    respURL := ctx.Update.Metadata["response_url"]
+    respURL := ctx.RequestSnapshot.ResponseURL
     responder.SendMarkdown(respURL, "# 异步通知\n任务已后台开始")
 }
 ```
@@ -89,7 +89,7 @@ func Run(cmd *cobra.Command, args []string) {
     msg := &wecom.UpdateTemplateCardMessage{
         ResponseType: "update_template_card",
         TemplateCard: &wecom.TemplateCard{
-            TaskID: ctx.Update.Metadata["task_id"],
+            TaskID: ctx.RequestSnapshot.Metadata["task_id"],
             MainTitle: &wecom.MainTitle{Title: "已批准"},
         },
     }
@@ -103,21 +103,22 @@ func Run(cmd *cobra.Command, args []string) {
 
 ## 3. 事件与路由机制
 
-为了简化开发，系统底层会自动将特定的企业微信**事件**转换为**文本指令**，从而复用现有的 Command 命令系统。
+为了简化开发，系统底层会将 `template_card_event` 的 `event_key` 转换为**文本指令**；`enter_chat` 仅透传 `event_type` 到 Metadata；`feedback_event` 默认短路返回（不进入 pipeline）。
 
 ### 3.1 事件映射表
 
 | 原始事件类型 (`event_type`) | 转换逻辑 | 路由结果 (Text) | 推荐实现方式 |
 | :--- | :--- | :--- | :--- |
-| `enter_chat` (进入会话) | 固定映射 | `/welcome` | 注册名为 `welcome` 的 Command 用于发送欢迎语 |
+| `enter_chat` (进入会话) | 不做文本映射 | (空) | 在上层根据 `Metadata["event_type"]` 自行处理 |
 | `template_card_event` (卡片交互) | 取 `event_key` | `event_key` 的值 | 将按钮 Key 设为 `/cmd` 形式，直接触发对应 Command |
-| `feedback_event` (用户反馈) | (仅透传 Metadata) | (无特殊文本) | 需在中间件或自定义逻辑中处理 |
+| `feedback_event` (用户反馈) | 默认短路返回 | (空) | 需在 Bot 层改造或自定义入口处理 |
 
 ## 4. 开发场景示例
 
 ### 场景 A: 实现欢迎语
 1.  注册命令 `Use: "welcome"`。
-2.  在 `Run` 中使用 `ctx.SetResponsePayload(&wecom.TemplateCardMessage{...})` 返回一张欢迎卡片。
+2.  在平台接入层或路由层将 `event_type=enter_chat` 映射为 `/welcome`。
+3.  在 `Run` 中使用 `ctx.SetResponsePayload(&wecom.TemplateCardMessage{...})` 返回一张欢迎卡片。
 
 ### 场景 B: 卡片按钮交互
 1.  发送一张包含按钮的卡片，按钮 Key 设为 `/approve order_123`。

@@ -19,20 +19,26 @@ type ConversationStore interface {
 	Save(key string, values ContextValues) error
 }
 
+// Responder 定义命令执行过程中的主动发送能力。
+type Responder interface {
+	Send(responseURL string, msg any) error
+	SendMarkdown(responseURL, content string) error
+	SendTemplateCard(responseURL string, card any) error
+}
+
 // ExecutionContext 为命令 handler 提供必要的环境信息。
 type ExecutionContext struct {
-	Update    botcore.Update
-	StreamID  string
-	Values    ContextValues
-	Store     ConversationStore
-	responder botcore.ActiveResponder
+	RequestSnapshot botcore.RequestSnapshot
+	Values        ContextValues
+	Store         ConversationStore
+	responder     Responder
 
-	// sendSignal 是一个回调函数，允许 Command 立即向 Pipeline 发送信号
+	// sendSignal 是一个回调函数，允许 Command 立即向 pipeline 发送信号
 	sendSignal func(chunk botcore.StreamChunk)
 }
 
 // SetResponsePayload 立即发送非流式响应对象。
-func (ctx *ExecutionContext) SetResponsePayload(payload interface{}) {
+func (ctx *ExecutionContext) SetResponsePayload(payload any) {
 	if ctx.sendSignal != nil {
 		ctx.sendSignal(botcore.StreamChunk{
 			Payload: payload,
@@ -53,7 +59,7 @@ func (ctx *ExecutionContext) SetNoResponse() {
 }
 
 // Responder 返回主动消息发送器。
-func (ctx *ExecutionContext) Responder() botcore.ActiveResponder {
+func (ctx *ExecutionContext) Responder() Responder {
 	return ctx.responder
 }
 
@@ -62,7 +68,7 @@ func (ctx *ExecutionContext) ConversationKey() string {
 	if ctx == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s:%s", ctx.Update.ChatID, ctx.Update.SenderID)
+	return fmt.Sprintf("%s:%s", ctx.RequestSnapshot.ChatID, ctx.RequestSnapshot.SenderID)
 }
 
 // WithExecutionContext 将 ExecutionContext 注入到标准 context.Context 中。

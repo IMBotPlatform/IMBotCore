@@ -12,18 +12,20 @@ import (
 
 // Stream 表示一次流式会话的上下文。
 type Stream struct {
-	StreamID    string                   // 流式会话唯一标识
-	MsgID       string                   // 对应企业微信消息 ID
-	ChatID      string                   // 会话所属聊天 ID
-	UserID      string                   // 发起用户 ID
-	Update      botcore.Update           // 标准化事件上下文
-	CreatedAt   time.Time                // 创建时间
-	LastAccess  time.Time                // 最近访问时间
-	queue       chan botcore.StreamChunk // 缓冲队列，存储待下发的流式片段
-	Finished    bool                     // 会话是否已完成
-	LastChunk   *botcore.StreamChunk     // 最近一次发送的片段，用于超时兜底
-	Accumulated string                   // 已累积的完整内容，用于满足企业微信“最新完整内容”语义
-	mu          sync.Mutex               // 保护会话内状态的互斥锁
+	RequestSnapshot botcore.RequestSnapshot // 标准化事件上下文
+
+	StreamID    string    // 流式会话唯一标识
+	MsgID       string    // 对应企业微信消息 ID
+	ChatID      string    // 会话所属聊天 ID
+	UserID      string    // 发起用户 ID
+	ResponseURL string    // 主动回复 URL（部分事件返回）
+	CreatedAt   time.Time // 创建时间
+	LastAccess  time.Time // 最近访问时间
+
+	Finished  bool                     // 会话是否已完成
+	queue     chan botcore.StreamChunk // 缓冲队列，存储待下发的流式片段
+	LastChunk *botcore.StreamChunk     // 最近一次发送的片段，用于超时兜底
+	mu        sync.Mutex               // 保护会话内状态的互斥锁
 }
 
 // StreamManager 管理流式会话的生命周期。
@@ -32,28 +34,30 @@ type StreamManager struct {
 	streams  map[string]*Stream // streamID -> Stream 映射
 	msgIndex map[string]string  // msgID -> streamID 索引
 	ttl      time.Duration      // 会话超时时长
+	timeout  time.Duration      // 消费流式片段的等待时长
 }
 
-// NewStreamManager 创建 StreamManager。
+// newStreamManager 创建 StreamManager。
 // Parameters:
 //   - ttl: 会话最长存活时间，非正值时回退为 1 分钟
+//   - timeout: 消费流式片段等待时长，非正值时回退为 500ms
 //
 // Returns:
 //   - *StreamManager: 管理会话的实例
-func NewStreamManager(ttl time.Duration) *StreamManager {
-	if ttl <= 0 {
-		ttl = time.Minute
-	}
+func newStreamManager(ttl, timeout time.Duration) *StreamManager {
+	ttl = resolveDuration(ttl, envBotStreamTTL, time.Minute)
+	timeout = resolveDuration(timeout, envBotStreamWaitTimeout, 500*time.Millisecond)
 
 	// 初始化会话管理器，建立基础映射结构。
 	return &StreamManager{
 		streams:  make(map[string]*Stream),
 		msgIndex: make(map[string]string),
 		ttl:      ttl,
+		timeout:  timeout,
 	}
 }
 
-// CreateOrGet 根据消息创建或返回既有会话。
+// createOrGet 根据消息创建或返回既有会话。
 // Parameters:
 //   - msg: 企业微信消息体
 //
@@ -84,11 +88,11 @@ func NewStreamManager(ttl time.Duration) *StreamManager {
 //	[初始化Stream并索引]
 //	       |
 //	[返回新会话+isNew]
-func (m *StreamManager) CreateOrGet(msg *Message) (*Stream, bool) {
+func (m *StreamManager) createOrGet(msg *Message) (*Stream, bool) {
 	var existing *Stream
 	if msg.MsgID != "" {
 		// 尝试依据消息 ID 命中既有的流式会话。
-		if streamID, ok := m.GetStreamIDByMsg(msg.MsgID); ok {
+		if streamID, ok := m.getStreamIDByMsg(msg.MsgID); ok {
 			existing = m.getStream(streamID)
 		}
 	}
@@ -101,13 +105,14 @@ func (m *StreamManager) CreateOrGet(msg *Message) (*Stream, bool) {
 	// 未命中时创建全新的会话上下文。
 	streamID := generateStreamID()
 	stream := &Stream{
-		StreamID:   streamID,
-		MsgID:      msg.MsgID,
-		ChatID:     msg.ChatID,
-		UserID:     msg.From.UserID,
-		CreatedAt:  time.Now(),
-		LastAccess: time.Now(),
-		queue:      make(chan botcore.StreamChunk, 16),
+		StreamID:    streamID,
+		MsgID:       msg.MsgID,
+		ChatID:      msg.ChatID,
+		UserID:      msg.From.UserID,
+		ResponseURL: msg.ResponseURL,
+		CreatedAt:   time.Now(),
+		LastAccess:  time.Now(),
+		queue:       make(chan botcore.StreamChunk, 16), // 固定容量缓冲，避免无界增长
 	}
 	m.mu.Lock()
 	m.streams[streamID] = stream
@@ -119,38 +124,14 @@ func (m *StreamManager) CreateOrGet(msg *Message) (*Stream, bool) {
 	return stream, true
 }
 
-// Accumulate 仅累积内容到会话状态，不发布到队列。
-// 适用于 Initial 阶段已经直接返回了内容，但需要同步会话状态的场景。
-func (m *StreamManager) Accumulate(streamID, content string) bool {
-	stream := m.getStream(streamID)
-	if stream == nil {
-		return false
-	}
-	stream.mu.Lock()
-	stream.LastAccess = time.Now()
-	stream.Accumulated += content
-	// 更新 LastChunk 以保持状态一致，虽然不入队
-	if stream.LastChunk != nil {
-		stream.LastChunk.Content = stream.Accumulated
-	} else {
-		// 如果 LastChunk 为空，创建一个新的非终结快照
-		stream.LastChunk = &botcore.StreamChunk{
-			Content: stream.Accumulated,
-			IsFinal: false,
-		}
-	}
-	stream.mu.Unlock()
-	return true
-}
-
-// Publish 向指定会话写入流式片段，队列满时会覆盖最新片段。
+// publish 向指定会话写入流式片段，队列满时会阻塞等待消费后写入。
 // Parameters:
 //   - streamID: 会话标识
 //   - chunk: 待推送的流式数据
 //
 // Returns:
 //   - bool: 成功写入返回 true
-func (m *StreamManager) Publish(streamID string, chunk botcore.StreamChunk) bool {
+func (m *StreamManager) publish(streamID string, chunk botcore.StreamChunk) bool {
 	stream := m.getStream(streamID)
 	if stream == nil {
 		return false
@@ -159,15 +140,19 @@ func (m *StreamManager) Publish(streamID string, chunk botcore.StreamChunk) bool
 	// 加锁更新会话活跃状态与最后一次片段。
 	stream.mu.Lock()
 	stream.LastAccess = time.Now()
-	// 企业微信要求 content 为“最新完整内容”，因此这里累积全文后再入队。
-	stream.Accumulated += chunk.Content
 	fullChunk := chunk
-	fullChunk.Content = stream.Accumulated
+	// 企业微信要求 content 为“最新完整内容”，因此这里累积全文后再入队。
+	// 注意：若携带 Payload，视为非文本回复，清空累计内容。
+	if chunk.Payload == nil && stream.LastChunk != nil {
+		fullChunk.Content = stream.LastChunk.Content + chunk.Content
+	} else if chunk.Payload != nil {
+		fullChunk.Content = ""
+	}
 	stream.LastChunk = &fullChunk
 	finished := fullChunk.IsFinal
 	stream.mu.Unlock()
 
-	// 尝试无阻塞写入队列，队列满则覆盖最老数据。
+	// 尝试无阻塞写入队列，队列满则等待消费后写入。
 	select {
 	case stream.queue <- fullChunk:
 	default:
@@ -181,15 +166,31 @@ func (m *StreamManager) Publish(streamID string, chunk botcore.StreamChunk) bool
 	return true
 }
 
-// Consume 从会话队列中读取一个片段，超时返回 nil。
-// 为了满足企业微信“content 为最新完整内容”的语义，会排干队列并返回最新的全量快照。
-func (m *StreamManager) Consume(streamID string, timeout time.Duration) *botcore.StreamChunk {
+// getLatestChunk 获取指定 streamID 的首包快照与最新累计片段。
+// Parameters:
+//   - streamID: 会话标识
+//
+// Returns:
+//   - botcore.RequestSnapshot: 首包快照（若未绑定则仅填充 ID）
+//   - *botcore.StreamChunk: 最新累计片段，可能为 nil
+func (m *StreamManager) getLatestChunk(streamID string) (botcore.RequestSnapshot, *botcore.StreamChunk) {
+	if streamID == "" {
+		return botcore.RequestSnapshot{}, nil
+	}
+
+	// 关键步骤：快照 ID 始终与 streamID 对齐，确保回复具备完整标识。
+	snapshot := m.getFirstSnapshot(streamID)
+	if snapshot.ID == "" {
+		snapshot.ID = streamID
+	}
+
 	stream := m.getStream(streamID)
 	if stream == nil {
-		return nil
+		return snapshot, nil
 	}
+	timeout := m.timeout
 	if timeout <= 0 {
-		timeout = 500 * time.Millisecond
+		timeout = resolveDuration(0, envBotStreamWaitTimeout, 500*time.Millisecond)
 	}
 
 	// 初始化超时控制器，避免无限阻塞消费。
@@ -228,25 +229,27 @@ func (m *StreamManager) Consume(streamID string, timeout time.Duration) *botcore
 			stream.Finished = true
 		}
 		stream.mu.Unlock()
-		return &latestChunk
+		return snapshot, &latestChunk
 	case <-timer.C:
 		// 超时未获取到片段时，回退到缓存的最后一次片段。
 		stream.mu.Lock()
 		stream.LastAccess = time.Now()
 		var cached *botcore.StreamChunk
+		// 仅在已完成时返回缓存片段，避免返回半成品。
 		if stream.Finished && stream.LastChunk != nil {
+			// 拷贝一份，避免外部修改影响缓存。
 			clone := *stream.LastChunk
 			cached = &clone
 		}
 		stream.mu.Unlock()
-		return cached
+		return snapshot, cached
 	}
 }
 
-// MarkFinished 标记会话完成。
+// markFinished 标记会话完成。
 // Parameters:
 //   - streamID: 会话标识
-func (m *StreamManager) MarkFinished(streamID string) {
+func (m *StreamManager) markFinished(streamID string) {
 	stream := m.getStream(streamID)
 	if stream == nil {
 		return
@@ -256,36 +259,36 @@ func (m *StreamManager) MarkFinished(streamID string) {
 	stream.setFinished()
 }
 
-// SetUpdate 绑定标准化事件到会话。
-func (m *StreamManager) SetUpdate(streamID string, update botcore.Update) {
+// setFirstSnapshot 绑定首包快照到会话。
+func (m *StreamManager) setFirstSnapshot(streamID string, firstSnapshot botcore.RequestSnapshot) {
 	stream := m.getStream(streamID)
 	if stream == nil {
 		return
 	}
 	stream.mu.Lock()
-	stream.Update = update
+	stream.RequestSnapshot = firstSnapshot
 	stream.mu.Unlock()
 }
 
-// GetUpdate 返回指定会话的标准化事件副本。
-func (m *StreamManager) GetUpdate(streamID string) botcore.Update {
+// getFirstSnapshot 返回指定会话的首包快照副本。
+func (m *StreamManager) getFirstSnapshot(streamID string) botcore.RequestSnapshot {
 	stream := m.getStream(streamID)
 	if stream == nil {
-		return botcore.Update{}
+		return botcore.RequestSnapshot{}
 	}
 	stream.mu.Lock()
 	defer stream.mu.Unlock()
-	return stream.Update
+	return stream.RequestSnapshot
 }
 
-// GetStreamIDByMsg 根据 msgid 获取 streamID，用于消息与会话绑定。
+// getStreamIDByMsg 根据 msgid 获取 streamID，用于消息与会话绑定。
 // Parameters:
 //   - msgID: 企业微信消息 ID
 //
 // Returns:
 //   - string: 匹配的 streamID
 //   - bool: 是否存在对应会话
-func (m *StreamManager) GetStreamIDByMsg(msgID string) (string, bool) {
+func (m *StreamManager) getStreamIDByMsg(msgID string) (string, bool) {
 	if msgID == "" {
 		return "", false
 	}
@@ -298,7 +301,7 @@ func (m *StreamManager) GetStreamIDByMsg(msgID string) (string, bool) {
 	return streamID, ok
 }
 
-// Cleanup 清理过期的会话。
+// cleanup 清理过期的会话。
 // 流程图：
 //
 //	[遍历streams]
@@ -308,7 +311,7 @@ func (m *StreamManager) GetStreamIDByMsg(msgID string) (string, bool) {
 //	    是
 //	     |
 //	[删除stream及msgIndex映射]
-func (m *StreamManager) Cleanup() {
+func (m *StreamManager) cleanup() {
 	now := time.Now()
 	m.mu.Lock()
 	// 遍历所有会话，及时清理超时资源。
@@ -332,6 +335,12 @@ func (m *StreamManager) Cleanup() {
 	m.mu.Unlock()
 }
 
+// getStream 根据 streamID 获取会话指针。
+// Parameters:
+//   - streamID: 会话标识
+//
+// Returns:
+//   - *Stream: 匹配的会话指针，找不到返回 nil
 func (m *StreamManager) getStream(streamID string) *Stream {
 	if streamID == "" {
 		return nil

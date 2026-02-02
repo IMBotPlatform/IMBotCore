@@ -1,6 +1,6 @@
 # Command 进阶：上下文、三种回复模式、Responder
 
-更新时间：2025-12-14
+更新时间：2026-01-30
 
 本页说明 `pkg/command` 的几个关键能力：
 
@@ -16,7 +16,7 @@
 ctx := command.FromContext(cmd.Context())
 ```
 
-你可以通过 `ctx.Update` 读取 ChatID/SenderID/Text/Metadata 等信息。
+你可以通过 `ctx.RequestSnapshot` 读取 ChatID/SenderID/Text/Metadata 等信息。
 
 ## 2) 上下文存储（ConversationStore）
 
@@ -66,7 +66,7 @@ ctx := command.FromContext(cmd.Context())
 ctx.SetNoResponse()
 
 if ctx.Responder() != nil {
-	responseURL := ctx.Update.Metadata["response_url"] // 以企业微信为例
+	responseURL := ctx.RequestSnapshot.ResponseURL // 以企业微信为例
 	_ = ctx.Responder().SendMarkdown(responseURL, "# 异步通知\n任务已后台开始")
 }
 ```

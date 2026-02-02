@@ -25,11 +25,11 @@
 | CASE 1: 首次消息 (MsgType != "stream")                  | CASE 2: 刷新请求 (MsgType == "stream")       |
 +-------------------------------------------------------+------------------------------------------+
 |                                                       |                                          |
-| 1. Initial()                                          | 1. Refresh()                             |
+| 1. initial()                                          | 1. refresh()                             |
 |    |                                                  |    |                                     |
-|    +--> [SessionManager] Create Session (StreamID)    |    +--> [SessionManager] Consume(StreamID) |
+|    +--> [StreamManager] Create Stream (StreamID)      |    +--> [StreamManager] getLatestChunk(StreamID) |
 |    |                                                  |         (阻塞等待，直到 Timeout 或有数据)     |
-|    +--> 启动 Goroutine: drainPipeline() --------------|--------+                                 |
+|    +--> 启动 Goroutine: doPipeline() -----------------|--------+                                 |
 |    |      |                                           |        |                                 |
 |    |      v                                           |        v                                 |
 |    |    [ pkg/botcore/router.go ]                     |    (获取到 Chunk)                          |
@@ -38,7 +38,7 @@
 |    |     /        \                                   |    | IsFinal?                            |
 |    |   (Command)  (AI Chat)                           |    +---+---+                             |
 |    |     /          \                                 |      |   |                               |
-|    |    v            v                                |      |   +-- Yes --> [MarkFinished]      |
+|    |    v            v                                |      |   +-- Yes --> [markFinished]      |
 |    | [Manager]    [AIService]                         |      |                                   |
 |    |    |            |                                |      v                                   |
 |    |    | (Run)      | (Stream)                       |  [Encrypt Reply]                         |
@@ -53,7 +53,7 @@
 |         |                                             |                                          |
 |         | <---- (drainPipeline 消费)                   |                                          |
 |         v                                             |                                          |
-|    [SessionManager] Publish(Chunk) -------------------+                                          |
+|    [StreamManager] publish(Chunk) --------------------+                                          |
 |                                                       |                                          |
 | 2. 返回空包 (ACK)                                      |                                          |
 |    告诉企业微信 "已收到，请开始轮询"                       |                                          |
@@ -62,10 +62,10 @@
 
 ### 1.2 核心步骤解析
 
-1.  **接收消息 (`Initial`)**:
+1.  **接收消息 (`initial`)**:
     *   用户发送消息，Bot 收到 HTTP POST。
-    *   `Initial` 方法创建会话 (`Session`)，生成唯一 `StreamID`。
-    *   **异步启动**业务逻辑（`drainPipeline`），开始生产数据。
+    *   `initial` 方法创建会话 (`Stream`)，生成唯一 `StreamID` 并写入 `RequestSnapshot.ID`。
+    *   **异步启动**业务逻辑（`doPipeline`），开始生产数据。
     *   主线程立即返回一个空的流式响应包，通知企业微信："已进入流式模式，请开始轮询"。
 
 2.  **业务处理 (`Pipeline`)**:
@@ -74,12 +74,12 @@
     *   **AI**: 大模型生成的 Token 被推送到 Channel。
     *   所有输出统一封装为 `StreamChunk`（含 `Content` 和 `IsFinal`）。
 
-3.  **数据中转 (`SessionManager`)**:
-    *   `drainPipeline` 从业务层读取增量片段，调用 `Publish` 存入 `SessionManager`。
+3.  **数据中转 (`StreamManager`)**:
+    *   `doPipeline` 从业务层读取增量片段，调用 `publish` 存入 `StreamManager`。
 
-4.  **流式回传 (`Refresh`)**:
+4.  **流式回传 (`refresh`)**:
     *   企业微信收到首包后，发起 `MsgType="stream"` 的请求。
-    *   Bot 调用 `Consume` **阻塞等待**新数据。
+    *   Bot 调用 `getLatestChunk` **阻塞等待**新数据。
     *   一旦有数据（或超时），立即返回当前**最新的全量内容**。
     *   循环此过程，直到返回 `IsFinal=true`。
 
@@ -94,16 +94,16 @@
 |                                          数据流叠加原理                                                        |
 +---------------------------------------------------------------------------------------------------------------+
 
-[1. 生产者: Pipeline]             [2. 状态管理: SessionManager]                   [3. 消费者: HTTP Refresh]
-(Command / AI Service)            (pkg/platform/wecom/session.go)                (pkg/platform/wecom/bot.go)
+[1. 生产者: Pipeline]             [2. 状态管理: StreamManager]                    [3. 消费者: HTTP refresh]
+(Command / AI Service)            (pkg/platform/wecom/stream.go)                 (pkg/platform/wecom/bot.go)
 
    Generate Incremental               Maintain Full State                            Poll & Response
          Chunks                           (Accumulation)                               (Snapshot)
 
            |                                    |                                            |
    +-------v-------+                 +----------v-----------+                                |
-   | Chunk 1: "H"  | --------------> | Session.Accumulated  |                                |
-   +---------------+    (Publish)    | Now: "H"             |                                |
+   | Chunk 1: "H"  | --------------> | Stream.LastChunk     |                                |
+   +---------------+    (publish)    | Now: "H"             |                                |
                                      |                      |                                |
                                      | -> Enqueue Full: "H" |                                |
                                      +----------+-----------+                                |
@@ -112,9 +112,9 @@
                                                 |                                  | MsgType: stream   |
                                                 v                                  +---------+---------+
                                      +----------+-----------+                                |
-   +-------v-------+                 | Session.Accumulated  | <---- (Consume) ---------------+
+   +-------v-------+                 | Stream.LastChunk     | <---- (getLatestChunk) --------+
    | Chunk 2: "el" | --------------> | Now: "Hel"           |       1. Take "H"              |
-   +---------------+    (Publish)    |                      |       2. Return "H"            v
+   +---------------+    (publish)    |                      |       2. Return "H"            v
                                      | -> Enqueue Full:     |                           [ Response ]
                                      |    "Hel"             |                           Content: "H"
                                      +----------+-----------+                           IsFinal: false
@@ -123,9 +123,9 @@
                                                 |
                                                 v
                                      +----------+-----------+
-   +-------v-------+                 | Session.Accumulated  |
+   +-------v-------+                 | Stream.LastChunk     |
    | Chunk 3: "lo" | --------------> | Now: "Hello"         |
-   +---------------+    (Publish)    |                      |
+   +---------------+    (publish)    |                      |
                                      | -> Enqueue Full:     |
                                      |    "Hello"           |
                                      +----------+-----------+
@@ -137,9 +137,9 @@
                                                 |                                  | MsgType: stream   |
                                                 v                                  +---------+---------+
                                      +----------+-----------+                                |
-   +-------v-------+                 | Session.Accumulated  | <---- (Consume) ---------------+
+   +-------v-------+                 | Stream.LastChunk     | <---- (getLatestChunk) --------+
    | Chunk 4: "!"  | --------------> | Now: "Hello!"        |       1. Take "Hel"            |
-   | IsFinal: true |    (Publish)    |                      |       2. Take "Hello" (Skip)   |
+   | IsFinal: true |    (publish)    |                      |       2. Take "Hello" (Skip)   |
    +---------------+                 | -> Enqueue Full:     |       3. Return "Hello"        |
                                      |    "Hello!"          |          (Drain Queue)         v
                                      +----------+-----------+                           [ Response ]
@@ -151,7 +151,7 @@
                                                                                    | WeCom Request #3  |
                                                                                    +---------+---------+
                                                                                              |
-                                                                    (Consume) <--------------+
+                                                                    (getLatestChunk) <-------+
                                                                     1. Take "Hello!"         |
                                                                     2. IsFinal=true          v
                                                                                         [ Response ]
@@ -161,29 +161,29 @@
 
 ### 2.2 关键机制说明
 
-1.  **Publish (叠加)**:
-    *   当业务层产生增量内容（如 "lo"）时，`SessionManager` 会将其追加到内存中的 `Accumulated` 字符串。
+1.  **publish (叠加)**:
+    *   当业务层产生增量内容（如 "lo"）时，`StreamManager` 会把增量拼接到最近的 `LastChunk.Content`。
     *   然后，构造一个包含**完整内容**（"Hello"）的新 Chunk，放入发送队列。
     *   **意义**：保证队列中的每个元素都是独立的、完整的状态快照。
 
-2.  **Consume (跳过)**:
-    *   当 HTTP 请求到来时，`Consume` 方法会读取队列。
+2.  **getLatestChunk (跳过)**:
+    *   当 HTTP 请求到来时，`getLatestChunk` 方法会读取队列。
     *   **Drain 策略**：如果队列中积压了多个包（如 "Hel", "Hello", "Hello!"），它会循环读取直到队列为空，只返回最后一个。
     *   **意义**：避免客户端收到过期的中间状态，减少 HTTP 请求次数，提升用户体验。因为 "Hello!" 已经包含了 "Hel" 的所有信息。
 
 3.  **Timeout & Fallback**:
-    *   如果 `Refresh` 请求在 `Timeout` 时间内没有读到新数据，Bot 会返回当前的缓存快照（LastChunk），保持连接不中断。
-    *   如果 `MsgType="stream"` 请求找不到对应的 Session（可能已过期或重启），系统会尝试从 `fallback` 缓存中查找是否有未发送的 `Final` 包，作为最后的兜底。
+    *   如果 `refresh` 请求在 `Timeout` 时间内没有读到新数据，Bot 会返回当前的缓存快照（仅在会话已完成时返回 `LastChunk`），保持连接不中断。
+    *   如果 `MsgType="stream"` 请求找不到对应的 Stream（可能已过期或重启），系统会返回空包或终止包，避免阻塞轮询。
 
 ## 3. 关键组件代码映射
 
 *   **`pkg/platform/wecom/bot.go`**:
-    *   `Initial()`: 处理首包，启动 Pipeline。
-    *   `Refresh()`: 处理轮询，调用 `Sessions.Consume()`。
-*   **`pkg/platform/wecom/session.go`**:
-    *   `Session`: 存储 `Accumulated` 文本和 `queue`。
-    *   `Publish()`: 执行 `Accumulated += chunk` 并入队。
-    *   `Consume()`: 执行队列排干（Drain）逻辑。
+    *   `initial()`: 处理首包，启动 Pipeline。
+    *   `refresh()`: 处理轮询，调用 `StreamManager.getLatestChunk()`。
+*   **`pkg/platform/wecom/stream.go`**:
+    *   `Stream`: 存储 `LastChunk` 和 `queue`。
+    *   `publish()`: 叠加并入队完整内容快照。
+    *   `getLatestChunk()`: 执行队列排干（Drain）逻辑。
 *   **`pkg/botcore/router.go`**:
     *   `Chain` + `AddRoute`：基于前缀路由到命令或 AI。
     *   `MatchPrefix("/")`：匹配命令前缀，未匹配走默认处理。

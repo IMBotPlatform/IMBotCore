@@ -97,7 +97,7 @@ func newRootCmd(llm llms.Model) *cobra.Command {
 // 参数：llm 为 langchaingo 模型实例。
 // 返回：botcore.PipelineInvoker。
 func newAIHandler(llm llms.Model) botcore.PipelineInvoker {
-	return botcore.PipelineFunc(func(update botcore.Update, streamID string) <-chan botcore.StreamChunk {
+	return botcore.PipelineFunc(func(update botcore.FirstSnapshot) <-chan botcore.StreamChunk {
 		out := make(chan botcore.StreamChunk, 1)
 		go func() {
 			defer close(out)
@@ -185,12 +185,8 @@ func main() {
 	chain := botcore.NewChain(aiHandler)
 	chain.AddRoute("command", botcore.MatchPrefix("/"), manager)
 
-	// 5) 初始化企业微信 Bot。
-	crypt, err := wecom.NewCrypt(cfg.wecomToken, cfg.wecomAESKey, cfg.wecomCorpID)
-	if err != nil {
-		log.Fatalf("init wecom crypt: %v", err)
-	}
-	bot, err := wecom.NewBot(crypt, time.Minute, 2*time.Second, chain)
+	// 5) 初始化企业微信 Bot（内部创建加解密上下文）。
+	bot, err := wecom.NewBot(cfg.wecomToken, cfg.wecomAESKey, cfg.wecomCorpID, time.Minute, 2*time.Second, chain)
 	if err != nil {
 		log.Fatalf("init wecom bot: %v", err)
 	}

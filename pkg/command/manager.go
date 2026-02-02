@@ -18,7 +18,7 @@ type Manager struct {
 	parser    Parser
 	store     ConversationStore
 	logger    *log.Logger
-	responder botcore.ActiveResponder
+	responder Responder
 }
 
 // ManagerOption 自定义 Manager 行为。
@@ -32,7 +32,7 @@ func WithLogger(l *log.Logger) ManagerOption {
 }
 
 // WithResponder 注入主动消息发送器。
-func WithResponder(r botcore.ActiveResponder) ManagerOption {
+func WithResponder(r Responder) ManagerOption {
 	return func(m *Manager) {
 		m.responder = r
 	}
@@ -52,7 +52,7 @@ func NewManager(factory CommandFactory, store ConversationStore, opts ...Manager
 }
 
 // Trigger 满足 botcore.PipelineInvoker，为每个请求构建独立的命令树并执行。
-func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore.StreamChunk {
+func (m *Manager) Trigger(update botcore.RequestSnapshot) <-chan botcore.StreamChunk {
 	out := make(chan botcore.StreamChunk, 1)
 	go func() {
 		defer close(out)
@@ -93,11 +93,10 @@ func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore
 		}
 
 		execCtx := &ExecutionContext{
-			Update:     update,
-			StreamID:   streamID,
-			Store:      m.store,
-			responder:  m.responder,
-			sendSignal: sendSignal,
+			RequestSnapshot: update,
+			Store:         m.store,
+			responder:     m.responder,
+			sendSignal:    sendSignal,
 		}
 
 		convKey := execCtx.ConversationKey()
@@ -136,7 +135,7 @@ func (m *Manager) Trigger(update botcore.Update, streamID string) <-chan botcore
 	return out
 }
 
-func (m *Manager) logf(format string, args ...interface{}) {
+func (m *Manager) logf(format string, args ...any) {
 	if m == nil || m.logger == nil {
 		return
 	}
