@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -97,12 +96,12 @@ func newRootCmd(llm llms.Model) *cobra.Command {
 // 参数：llm 为 langchaingo 模型实例。
 // 返回：botcore.PipelineInvoker。
 func newAIHandler(llm llms.Model) botcore.PipelineInvoker {
-	return botcore.PipelineFunc(func(update botcore.FirstSnapshot) <-chan botcore.StreamChunk {
+	return botcore.PipelineFunc(func(pipelineCtx botcore.PipelineContext) <-chan botcore.StreamChunk {
 		out := make(chan botcore.StreamChunk, 1)
 		go func() {
 			defer close(out)
 
-			prompt := strings.TrimSpace(update.Text)
+			prompt := strings.TrimSpace(pipelineCtx.Snapshot.Text)
 			if prompt == "" {
 				out <- botcore.StreamChunk{Content: "empty input", IsFinal: true}
 				return
@@ -171,30 +170,35 @@ func main() {
 		log.Fatalf("init llm: %v", err)
 	}
 
-	// 3) 构建命令管理器与默认 AI 路由。
-	manager := command.NewManager(
-		func() *cobra.Command {
-			return newRootCmd(llm)
-		},
-		command.NewMemoryStore(),
-		command.WithResponder(wecom.NewClient()),
-	)
-	aiHandler := newAIHandler(llm)
+	// 3) 构建路由链（默认 AI 路由）。
+	chain := botcore.NewChain(newAIHandler(llm))
 
-	// 4) 构建路由链。
-	chain := botcore.NewChain(aiHandler)
-	chain.AddRoute("command", botcore.MatchPrefix("/"), manager)
-
-	// 5) 初始化企业微信 Bot（内部创建加解密上下文）。
+	// 4) 初始化企业微信 Bot（内部创建加解密上下文）。
 	bot, err := wecom.NewBot(cfg.wecomToken, cfg.wecomAESKey, cfg.wecomCorpID, time.Minute, 2*time.Second, chain)
 	if err != nil {
 		log.Fatalf("init wecom bot: %v", err)
 	}
 
-	// 6) 启动 HTTP 服务。
-	http.Handle("/callback/command", bot)
+	// 5) 构建命令管理器并注入主动发送能力。
+	manager := command.NewManager(
+		func() *cobra.Command {
+			return newRootCmd(llm)
+		},
+		command.WithResponser(bot),
+	)
+
+	// 6) 注册命令路由。
+	chain.AddRoute(
+		"command",
+		botcore.MatchPrefix("/"),
+		manager,
+	)
+
+	// 7) 启动 HTTP 服务（由 Bot.Start 负责路由挂载与监听）。
 	log.Printf("wecom claude-code example listening on %s", cfg.listenAddr)
-	log.Fatal(http.ListenAndServe(cfg.listenAddr, nil))
+	if err := bot.Start(wecom.StartOptions{ListenAddr: cfg.listenAddr}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // streamPrompt 以流式方式调用 LLM。

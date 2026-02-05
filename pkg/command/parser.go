@@ -45,6 +45,7 @@ func (p Parser) Parse(text string) ParseResult {
 
 	commandToken := strings.TrimPrefix(first, prefix)
 	if idx := strings.IndexRune(commandToken, '@'); idx >= 0 {
+		// 兼容 "/cmd@botname" 形式：@ 后是目标机器人标识，需剥离以保证命令匹配。
 		commandToken = commandToken[:idx]
 	}
 	if commandToken == "" {

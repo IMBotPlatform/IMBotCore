@@ -1,11 +1,10 @@
-# Command 进阶：上下文、三种回复模式、Responder
+# Command 进阶：ExecutionContext、三种回复模式、主动推送
 
 更新时间：2026-01-30
 
 本页说明 `pkg/command` 的几个关键能力：
 
 - 如何获取 `ExecutionContext`
-- 如何使用上下文存储（ConversationStore）
 - 三种被动/主动回复模式
 
 ## 1) 获取 ExecutionContext
@@ -18,24 +17,7 @@ ctx := command.FromContext(cmd.Context())
 
 你可以通过 `ctx.RequestSnapshot` 读取 ChatID/SenderID/Text/Metadata 等信息。
 
-## 2) 上下文存储（ConversationStore）
-
-`Manager` 会在执行前根据 `ConversationKey()` 尝试加载上下文字典到 `ctx.Values`。
-
-如果你要写回：
-
-```go
-ctx := command.FromContext(cmd.Context())
-key := ctx.ConversationKey()
-
-if ctx.Store != nil {
-	_ = ctx.Store.Save(key, command.ContextValues{
-		"last_command": "demo",
-	})
-}
-```
-
-## 3) 三种回复模式
+## 2) 三种回复模式
 
 ### 模式 A：文本流（默认）
 
@@ -52,7 +34,7 @@ cmd.Println("第二段输出")
 
 ```go
 ctx := command.FromContext(cmd.Context())
-ctx.SetResponsePayload(map[string]any{"ok": true})
+ctx.SendPayload(map[string]any{"ok": true})
 ```
 
 上层平台需要根据 `StreamChunk.Payload` 决定如何序列化/加密/返回（例如企业微信的卡片消息）。
@@ -63,12 +45,10 @@ ctx.SetResponsePayload(map[string]any{"ok": true})
 
 ```go
 ctx := command.FromContext(cmd.Context())
-ctx.SetNoResponse()
+ctx.SendNoResponse()
 
-if ctx.Responder() != nil {
-	responseURL := ctx.RequestSnapshot.ResponseURL // 以企业微信为例
-	_ = ctx.Responder().SendMarkdown(responseURL, "# 异步通知\n任务已后台开始")
-}
+// ResponseMarkdown 会自动使用 RequestSnapshot.ResponseURL。
+_ = ctx.ResponseMarkdown("# 异步通知\n任务已后台开始")
 ```
 
 ## 下一步

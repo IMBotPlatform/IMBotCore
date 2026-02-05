@@ -25,13 +25,14 @@ const (
 
 // RequestSnapshot 描述首包请求的标准化快照。
 type RequestSnapshot struct {
-	ID          string            // 平台内的唯一消息、事件或流会话 ID
-	SenderID    string            // 触发用户标识
-	ChatID      string            // 会话 ID（群、私聊等）
-	ChatType    ChatType          // 会话类型，示例：single/chatroom（企业微信为 single/group，内部映射为 chatroom）
+	ID       string   // 平台内的唯一消息、事件或流会话 ID
+	SenderID string   // 触发用户标识
+	ChatID   string   // 会话 ID（群、私聊等）
+	ChatType ChatType // 会话类型，示例：single/chatroom（企业微信为 single/group，内部映射为 chatroom）
+
 	Text        string            // 主要文本内容（若适用）
 	Attachments []Attachment      // 标准化附件列表（图片/文件等）
-	Raw         any               // 平台原始结构引用，便于 Handler 深度使用
+	Raw         any               // 平台原始结构引用，便于 Pipeline 深度使用
 	ResponseURL string            // 主动回复 URL（部分平台返回）
 	Metadata    map[string]string // 扩展键值，如语言、平台等
 }

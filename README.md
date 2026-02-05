@@ -61,7 +61,7 @@ func main() {
 		Metadata: map[string]string{"platform": "demo"},
 	}
 
-	manager := imbotcommand.NewManager(newRootCmd, imbotcommand.NewMemoryStore())
+	manager := imbotcommand.NewManager(newRootCmd)
 	for chunk := range manager.Trigger(update, "stream-1") {
 		// chunk.Content 为流式输出内容；chunk.IsFinal 为结束信号。
 		fmt.Print(chunk.Content)

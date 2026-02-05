@@ -145,7 +145,7 @@ func TestBotInitialReturnsEmptyAckAndRefreshGetsPipelineOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create crypt: %v", err)
 	}
-	pipeline := botcore.PipelineFunc(func(update botcore.RequestSnapshot) <-chan botcore.StreamChunk {
+	pipeline := botcore.PipelineFunc(func(pipelineCtx botcore.PipelineContext) <-chan botcore.StreamChunk {
 		ch := make(chan botcore.StreamChunk, 2)
 		ch <- botcore.StreamChunk{Content: "hi ", IsFinal: false}
 		ch <- botcore.StreamChunk{Content: "there", IsFinal: true}
@@ -224,7 +224,7 @@ func TestBotInitialNoResponseEndsStream(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create crypt: %v", err)
 	}
-	pipeline := botcore.PipelineFunc(func(update botcore.RequestSnapshot) <-chan botcore.StreamChunk {
+	pipeline := botcore.PipelineFunc(func(pipelineCtx botcore.PipelineContext) <-chan botcore.StreamChunk {
 		ch := make(chan botcore.StreamChunk, 1)
 		ch <- botcore.StreamChunk{Payload: botcore.NoResponse}
 		close(ch)

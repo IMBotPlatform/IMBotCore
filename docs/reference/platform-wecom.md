@@ -16,9 +16,9 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/platform/wecom"
   - [func NewBot\(token, encodingAESKey, corpID string, streamMsgTTL, streamWaitTimeout time.Duration, pipeline botcore.PipelineInvoker\) \(\*Bot, error\)](<#NewBot>)
   - [func \(b \*Bot\) BuildFirstSnapshot\(raw any\) \(botcore.RequestSnapshot, error\)](<#Bot.BuildFirstSnapshot>)
   - [func \(b \*Bot\) BuildReply\(firstSnapshot botcore.RequestSnapshot, chunk botcore.StreamChunk\) \(any, error\)](<#Bot.BuildReply>)
-  - [func \(b \*Bot\) Send\(responseURL string, msg any\) error](<#Bot.Send>)
-  - [func \(b \*Bot\) SendMarkdown\(responseURL, content string\) error](<#Bot.SendMarkdown>)
-  - [func \(b \*Bot\) SendTemplateCard\(responseURL string, card any\) error](<#Bot.SendTemplateCard>)
+  - [func \(b \*Bot\) Response\(responseURL string, msg any\) error](<#Bot.Response>)
+  - [func \(b \*Bot\) ResponseMarkdown\(responseURL, content string\) error](<#Bot.ResponseMarkdown>)
+  - [func \(b \*Bot\) ResponseTemplateCard\(responseURL string, card any\) error](<#Bot.ResponseTemplateCard>)
   - [func \(b \*Bot\) ServeHTTP\(w http.ResponseWriter, r \*http.Request\)](<#Bot.ServeHTTP>)
 - [type Button](<#Button>)
 - [type CardAction](<#CardAction>)
@@ -205,14 +205,14 @@ Returns:
 - any: 平台响应负载
 - error: 编码失败时返回
 
-<a name="Bot.Send"></a>
-### func \(\*Bot\) Send
+<a name="Bot.Response"></a>
+### func \(\*Bot\) Response
 
 ```go
-func (b *Bot) Send(responseURL string, msg any) error
+func (b *Bot) Response(responseURL string, msg any) error
 ```
 
-Send 向指定的 response\_url 发送主动回复消息。 对应文档：7\_加解密说明.md \- 如何主动回复消息 注意：response\_url 有效期为 1 小时，且每个 url 仅可调用一次。 Parameters:
+Response 向指定的 response\_url 发送主动回复消息。 对应文档：7\_加解密说明.md \- 如何主动回复消息 注意：response\_url 有效期为 1 小时，且每个 url 仅可调用一次。 Parameters:
 
 - responseURL: 企业微信回调中提供的 response\_url
 - msg: 待发送的消息负载（会被序列化为 JSON）
@@ -221,14 +221,14 @@ Returns:
 
 - error: 发送失败或序列化失败时返回
 
-<a name="Bot.SendMarkdown"></a>
-### func \(\*Bot\) SendMarkdown
+<a name="Bot.ResponseMarkdown"></a>
+### func \(\*Bot\) ResponseMarkdown
 
 ```go
-func (b *Bot) SendMarkdown(responseURL, content string) error
+func (b *Bot) ResponseMarkdown(responseURL, content string) error
 ```
 
-SendMarkdown 发送 Markdown 消息。 Parameters:
+ResponseMarkdown 发送 Markdown 消息。 Parameters:
 
 - responseURL: 企业微信回调中提供的 response\_url
 - content: Markdown 文本内容
@@ -237,14 +237,14 @@ Returns:
 
 - error: 发送失败时返回
 
-<a name="Bot.SendTemplateCard"></a>
-### func \(\*Bot\) SendTemplateCard
+<a name="Bot.ResponseTemplateCard"></a>
+### func \(\*Bot\) ResponseTemplateCard
 
 ```go
-func (b *Bot) SendTemplateCard(responseURL string, card any) error
+func (b *Bot) ResponseTemplateCard(responseURL string, card any) error
 ```
 
-SendTemplateCard 发送模板卡片消息。 Parameters:
+ResponseTemplateCard 发送模板卡片消息。 Parameters:
 
 - responseURL: 企业微信回调中提供的 response\_url
 - card: 模板卡片负载（需为 \*TemplateCard）

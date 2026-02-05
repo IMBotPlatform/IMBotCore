@@ -51,7 +51,7 @@ func newRootCmd() *cobra.Command {
 
 func main() {
 	// command.Manager 作为 pipeline（command 优先场景）。
-	manager := command.NewManager(newRootCmd, command.NewMemoryStore())
+	manager := command.NewManager(newRootCmd)
 
 	bot, err := wecom.NewBot("WECOM_TOKEN", "WECOM_ENCODING_AES_KEY", "WECOM_CORP_ID", time.Minute, 2*time.Second, manager)
 	if err != nil {

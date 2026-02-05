@@ -11,18 +11,27 @@ type StreamChunk struct {
 // 当 StreamChunk.Payload == NoResponse 时，Bot 层应直接返回 HTTP 200 OK 空包。
 var NoResponse = struct{}{}
 
+// PipelineContext 承载 Pipeline 执行所需的显式上下文。
+// Fields:
+//   - Snapshot: 标准化首包快照
+//   - Responser: 主动回复能力（可为空，代表不支持主动回复）
+type PipelineContext struct {
+	Snapshot  RequestSnapshot
+	Responser Responser
+}
+
 // PipelineInvoker 抽象命令/业务执行器。
 type PipelineInvoker interface {
-	Trigger(update RequestSnapshot) <-chan StreamChunk
+	Trigger(ctx PipelineContext) <-chan StreamChunk
 }
 
 // PipelineFunc 便于直接以函数充当 PipelineInvoker。
-type PipelineFunc func(update RequestSnapshot) <-chan StreamChunk
+type PipelineFunc func(ctx PipelineContext) <-chan StreamChunk
 
 // Trigger 实现 PipelineInvoker 接口。
-func (f PipelineFunc) Trigger(update RequestSnapshot) <-chan StreamChunk {
+func (f PipelineFunc) Trigger(ctx PipelineContext) <-chan StreamChunk {
 	if f == nil {
 		return nil
 	}
-	return f(update)
+	return f(ctx)
 }

@@ -17,14 +17,14 @@
 ## 包结构
 
 - `pkg/command`：命令系统（基于 Cobra），包含解析、执行、上下文、三种回复模式（文本流 / Payload / NoResponse）。
-- `pkg/botcore`：基础抽象（RequestSnapshot / StreamChunk / PipelineInvoker / Chain 路由）。
+- `pkg/botcore`：基础抽象（RequestSnapshot / PipelineContext / StreamChunk / PipelineInvoker / Chain 路由）。
 - `pkg/platform/wecom`：企业微信接入案例（Crypt、Bot（实现 botcore.Bot）、流式会话管理等）。
 
 ## 你需要提供什么
 
 `IMBotCore` 是“库”，不绑定你的 HTTP 框架/部署方式。你通常需要在你的服务中提供：
 
-- 一个 **平台接入层**（或复用 `pkg/platform/wecom`），负责生成 `botcore.RequestSnapshot`
+- 一个 **平台接入层**（或复用 `pkg/platform/wecom`），负责生成 `botcore.RequestSnapshot` 并组合为 `botcore.PipelineContext`
 - 一个 **Cobra 命令树工厂**（`func() *cobra.Command`）
 - 一个 **Pipeline 组合**（例如 `botcore.Chain`：`/` 前缀走 command，其它走默认处理器）
 

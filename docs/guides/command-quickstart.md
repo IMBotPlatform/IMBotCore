@@ -49,8 +49,11 @@ func main() {
 		Text:     "/ping",
 	}
 
-	manager := imbotcommand.NewManager(newRootCmd, imbotcommand.NewMemoryStore())
-	for chunk := range manager.Trigger(update) {
+	manager := imbotcommand.NewManager(newRootCmd)
+	pipelineCtx := botcore.PipelineContext{
+		Snapshot: update,
+	}
+	for chunk := range manager.Trigger(pipelineCtx) {
 		fmt.Print(chunk.Content)
 	}
 }

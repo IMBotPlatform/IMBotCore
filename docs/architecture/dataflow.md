@@ -30,7 +30,7 @@ Enterprise WeCom (POST encrypted)
 Yes v                          v No
 CommandManager            AIHandler
   -> Cobra cmds             -> 应用侧 LLM（流式）
-  -> Responder              ->（应用侧可选存储）
+  -> ctx.Send*              ->（应用侧可选存储）
           \                    /
            \                  /
             \                /
@@ -54,6 +54,6 @@ CommandManager            AIHandler
 
 ## 相关代码定位
 - 平台接入（企业微信案例）：`pkg/platform/wecom/bot.go`, `pkg/platform/wecom/stream.go`, `pkg/platform/wecom/message.go`
-- 路由/链：`pkg/botcore/router.go`
+- 路由/链：`pkg/botcore/chain.go`
 - 命令系统：`pkg/command/manager.go`, `pkg/command/parser.go`, `pkg/command/context.go`
 - AI 流式：应用侧使用 langchaingo 或其他 SDK 实现

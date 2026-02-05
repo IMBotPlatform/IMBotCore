@@ -17,4 +17,4 @@ require (
 	github.com/spf13/pflag v1.0.9 // indirect
 )
 
-replace github.com/IMBotPlatform/IMBotCore => ../..
+replace github.com/IMBotPlatform/IMBotCore => ../../

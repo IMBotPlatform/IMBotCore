@@ -8,12 +8,12 @@ type Bot interface {
 	// BuildReply 将流式片段编码为平台响应。
 	BuildReply(firstSnapshot RequestSnapshot, chunk StreamChunk) (any, error)
 
-	// Send 向指定的 response_url 发送主动回复消息。
-	Send(responseURL string, msg any) error
+	// Response 向指定的 response_url 发送主动回复消息。
+	Response(responseURL string, msg any) error
 
-	// SendMarkdown 发送 Markdown 消息。
-	SendMarkdown(responseURL, content string) error
+	// ResponseMarkdown 发送 Markdown 消息。
+	ResponseMarkdown(responseURL, content string) error
 
-	// SendTemplateCard 发送模板卡片消息。
-	SendTemplateCard(responseURL string, card any) error
+	// ResponseTemplateCard 发送模板卡片消息。
+	ResponseTemplateCard(responseURL string, card any) error
 }

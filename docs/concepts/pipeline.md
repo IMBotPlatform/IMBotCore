@@ -2,7 +2,7 @@
 
 更新时间：2026-01-30
 
-本页解释 `pkg/botcore` 的核心抽象，用于把平台输入统一成 `RequestSnapshot`，再通过路由把它交给不同的处理器（例如 `command.Manager`）。
+本页解释 `pkg/botcore` 的核心抽象，用于把平台输入统一成 `RequestSnapshot`，再通过 `PipelineContext` 交给不同的处理器（例如 `command.Manager`）。
 
 ## 关键抽象
 
@@ -27,22 +27,29 @@
 - `IsFinal`：结束信号
 - `Payload == botcore.NoResponse`：表示无需被动回复（交由平台实现处理）
 
-### 3) PipelineInvoker
+### 3) PipelineContext
+
+`botcore.PipelineContext` 是 Pipeline 的显式上下文容器，包含：
+
+- `Snapshot`：标准化首包快照
+- `Responser`：主动回复能力（可为空）
+
+### 4) PipelineInvoker
 
 `PipelineInvoker` 是统一的“执行器”接口：
 
 ```go
-Trigger(update RequestSnapshot) <-chan StreamChunk
+Trigger(ctx PipelineContext) <-chan StreamChunk
 ```
 
-其中流式会话标识统一由 `RequestSnapshot.ID` 表达（例如 wecom 的 `streamID`）。
+其中流式会话标识统一由 `ctx.Snapshot.ID` 表达（例如 wecom 的 `streamID`）。
 
-### 4) Chain（责任链路由）
+### 5) Chain（责任链路由）
 
 `botcore.Chain` 提供一个最小路由器：
 
 - 按顺序检查每条 `Route.Matcher`
-- 命中则交给对应 `Handler`
+- 命中则交给对应 `PipelineInvoker`
 - 否则交给 `defaultHandler`
 
 最常见的策略：

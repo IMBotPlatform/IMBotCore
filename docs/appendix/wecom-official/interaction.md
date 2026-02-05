@@ -38,8 +38,8 @@
 
 | 类型 | 字段 (`MsgType`) | 结构体 | 调用方式 |
 | :--- | :--- | :--- | :--- |
-| **Markdown** | `markdown` | `MarkdownMessage` | `responder.SendMarkdown(...)` |
-| **模板卡片** | `template_card` | `TemplateCardMessage` | `responder.SendTemplateCard(...)` |
+| **Markdown** | `markdown` | `MarkdownMessage` | `ctx.ResponseMarkdown(...)` |
+| **模板卡片** | `template_card` | `TemplateCardMessage` | `ctx.ResponseTemplateCard(...)` |
 
 ---
 
@@ -68,12 +68,11 @@ func Run(cmd *cobra.Command, args []string) {
     ctx := command.FromContext(cmd.Context())
     
     // 1. 标记静默：Bot 将直接返回 HTTP 200 OK 空包
-    ctx.SetNoResponse()
+    ctx.SendNoResponse()
 
-    // 2. 使用 Responder 主动推送消息 (异步)
-    responder := ctx.Responder()
-    respURL := ctx.RequestSnapshot.ResponseURL
-    responder.SendMarkdown(respURL, "# 异步通知\n任务已后台开始")
+    // 2. 主动推送消息 (异步)
+    // ResponseMarkdown 会自动使用 RequestSnapshot.ResponseURL
+    _ = ctx.ResponseMarkdown("# 异步通知\n任务已后台开始")
 }
 ```
 
@@ -95,7 +94,7 @@ func Run(cmd *cobra.Command, args []string) {
     }
     
     // 设置 Payload：Bot 将序列化此对象并加密返回
-    ctx.SetResponsePayload(msg)
+    ctx.SendPayload(msg)
 }
 ```
 
@@ -118,13 +117,13 @@ func Run(cmd *cobra.Command, args []string) {
 ### 场景 A: 实现欢迎语
 1.  注册命令 `Use: "welcome"`。
 2.  在平台接入层或路由层将 `event_type=enter_chat` 映射为 `/welcome`。
-3.  在 `Run` 中使用 `ctx.SetResponsePayload(&wecom.TemplateCardMessage{...})` 返回一张欢迎卡片。
+3.  在 `Run` 中使用 `ctx.SendPayload(&wecom.TemplateCardMessage{...})` 返回一张欢迎卡片。
 
 ### 场景 B: 卡片按钮交互
 1.  发送一张包含按钮的卡片，按钮 Key 设为 `/approve order_123`。
 2.  用户点击按钮，企业微信推送 `template_card_event`。
 3.  适配器将其转换为文本 `/approve order_123`。
 4.  系统路由至 `approve` 命令。
-5.  `approve` 命令使用 `ctx.SetResponsePayload(&wecom.UpdateTemplateCardMessage{...})` 更新原卡片状态。
+5.  `approve` 命令使用 `ctx.SendPayload(&wecom.UpdateTemplateCardMessage{...})` 更新原卡片状态。
 
 > 更多信息请参考 `docs/appendix/wecom-official/index.md`。

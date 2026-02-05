@@ -32,7 +32,7 @@
 |    +--> 启动 Goroutine: doPipeline() -----------------|--------+                                 |
 |    |      |                                           |        |                                 |
 |    |      v                                           |        v                                 |
-|    |    [ pkg/botcore/router.go ]                     |    (获取到 Chunk)                          |
+|    |    [ pkg/botcore/chain.go ]                      |    (获取到 Chunk)                          |
 |    |      Trigger()                                   |        |                                 |
 |    |      /      \                                    |    +---+---+                             |
 |    |     /        \                                   |    | IsFinal?                            |
@@ -184,7 +184,7 @@
     *   `Stream`: 存储 `LastChunk` 和 `queue`。
     *   `publish()`: 叠加并入队完整内容快照。
     *   `getLatestChunk()`: 执行队列排干（Drain）逻辑。
-*   **`pkg/botcore/router.go`**:
+*   **`pkg/botcore/chain.go`**:
     *   `Chain` + `AddRoute`：基于前缀路由到命令或 AI。
     *   `MatchPrefix("/")`：匹配命令前缀，未匹配走默认处理。
 *   **`pkg/command/io.go`**:

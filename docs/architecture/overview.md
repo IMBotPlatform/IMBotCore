@@ -30,13 +30,13 @@ StreamChunk (Content / Payload / NoResponse)
 ```
 
 ## 数据与状态
-- 命令上下文：可用 `command.ConversationStore` 存取（默认实现：`command.MemoryStore`）。
+- 命令上下文：通过 `command.ExecutionContext` 提供请求信息与回包能力。
 
 ## 关键路由规则
 - 以 `/` 开头：`botcore.MatchPrefix("/")` → `command.Manager` → 执行业务命令。
 - 其它输入：交给你自定义的默认处理器（例如 AI、FAQ、兜底提示等）。
 
 ## 扩展点
-- 新增命令：在 `CommandFactory` 中注册新的 Cobra 子命令即可。
+- 新增命令：在 `CommandFunc` 中注册新的 Cobra 子命令即可。
 - 新增路由：在 `botcore.Chain.AddRoute(...)` 增加规则（按顺序匹配）。
 - 新增平台：实现平台接入层并输出 `botcore.RequestSnapshot`（或复用 `pkg/platform/wecom` 案例）。

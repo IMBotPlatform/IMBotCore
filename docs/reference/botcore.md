@@ -13,16 +13,16 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 - [type AttachmentType](<#AttachmentType>)
 - [type Bot](<#Bot>)
 - [type Chain](<#Chain>)
-  - [func NewChain\(defaultHandler Handler\) \*Chain](<#NewChain>)
-  - [func \(c \*Chain\) AddRoute\(name string, matcher Matcher, handler Handler\)](<#Chain.AddRoute>)
-  - [func \(c \*Chain\) Trigger\(update RequestSnapshot\) \<\-chan StreamChunk](<#Chain.Trigger>)
+  - [func NewChain\(defaultHandler PipelineInvoker\) \*Chain](<#NewChain>)
+  - [func \(c \*Chain\) AddRoute\(name string, matcher Matcher, handler PipelineInvoker\)](<#Chain.AddRoute>)
+  - [func \(c \*Chain\) Trigger\(ctx PipelineContext\) \<\-chan StreamChunk](<#Chain.Trigger>)
 - [type ChatType](<#ChatType>)
-- [type Handler](<#Handler>)
 - [type Matcher](<#Matcher>)
   - [func MatchAny\(\) Matcher](<#MatchAny>)
   - [func MatchPrefix\(prefix string\) Matcher](<#MatchPrefix>)
+- [type PipelineContext](<#PipelineContext>)
 - [type PipelineFunc](<#PipelineFunc>)
-  - [func \(f PipelineFunc\) Trigger\(update RequestSnapshot\) \<\-chan StreamChunk](<#PipelineFunc.Trigger>)
+  - [func \(f PipelineFunc\) Trigger\(ctx PipelineContext\) \<\-chan StreamChunk](<#PipelineFunc.Trigger>)
 - [type PipelineInvoker](<#PipelineInvoker>)
 - [type RequestSnapshot](<#RequestSnapshot>)
   - [func \(r RequestSnapshot\) SaveAttachments\(dir string\) \(\[\]SavedAttachment, error\)](<#RequestSnapshot.SaveAttachments>)
@@ -84,21 +84,21 @@ type Bot interface {
     // BuildReply 将流式片段编码为平台响应。
     BuildReply(firstSnapshot RequestSnapshot, chunk StreamChunk) (any, error)
 
-    // Send 向指定的 response_url 发送主动回复消息。
-    Send(responseURL string, msg any) error
+    // Response 向指定的 response_url 发送主动回复消息。
+    Response(responseURL string, msg any) error
 
-    // SendMarkdown 发送 Markdown 消息。
-    SendMarkdown(responseURL, content string) error
+    // ResponseMarkdown 发送 Markdown 消息。
+    ResponseMarkdown(responseURL, content string) error
 
-    // SendTemplateCard 发送模板卡片消息。
-    SendTemplateCard(responseURL string, card any) error
+    // ResponseTemplateCard 发送模板卡片消息。
+    ResponseTemplateCard(responseURL string, card any) error
 }
 ```
 
 <a name="Chain"></a>
 ## type Chain
 
-Chain 实现了一个基于责任链/路由表的 PipelineInvoker。 它按顺序检查路由，一旦匹配成功，就移交给对应的 Handler，并停止后续匹配。 如果所有路由都不匹配，且设置了 DefaultHandler，则调用 DefaultHandler。
+Chain 实现了一个基于责任链/路由表的 PipelineInvoker。 它按顺序检查路由，一旦匹配成功，就移交给对应的 PipelineInvoker，并停止后续匹配。 如果所有路由都不匹配，且设置了 defaultHandler，则调用 defaultHandler。
 
 ```go
 type Chain struct {
@@ -110,7 +110,7 @@ type Chain struct {
 ### func NewChain
 
 ```go
-func NewChain(defaultHandler Handler) *Chain
+func NewChain(defaultHandler PipelineInvoker) *Chain
 ```
 
 NewChain 创建一个新的责任链路由器。
@@ -119,7 +119,7 @@ NewChain 创建一个新的责任链路由器。
 ### func \(\*Chain\) AddRoute
 
 ```go
-func (c *Chain) AddRoute(name string, matcher Matcher, handler Handler)
+func (c *Chain) AddRoute(name string, matcher Matcher, handler PipelineInvoker)
 ```
 
 AddRoute 添加一条路由规则。
@@ -128,7 +128,7 @@ AddRoute 添加一条路由规则。
 ### func \(\*Chain\) Trigger
 
 ```go
-func (c *Chain) Trigger(update RequestSnapshot) <-chan StreamChunk
+func (c *Chain) Trigger(ctx PipelineContext) <-chan StreamChunk
 ```
 
 Trigger 实现 PipelineInvoker 接口。
@@ -149,15 +149,6 @@ const (
     ChatTypeSingle   ChatType = "single"   // 单聊
     ChatTypeChatroom ChatType = "chatroom" // 群聊
 )
-```
-
-<a name="Handler"></a>
-## type Handler
-
-Handler 定义路由处理逻辑。 实际上就是 PipelineInvoker，为了语义清晰起见定义别名。
-
-```go
-type Handler PipelineInvoker
 ```
 
 <a name="Matcher"></a>
@@ -187,20 +178,32 @@ func MatchPrefix(prefix string) Matcher
 
 MatchPrefix 返回一个匹配文本前缀的 Matcher。
 
+<a name="PipelineContext"></a>
+## type PipelineContext
+
+PipelineContext 承载 Pipeline 执行所需的显式上下文。
+
+```go
+type PipelineContext struct {
+    Snapshot  RequestSnapshot
+    Responser Responser
+}
+```
+
 <a name="PipelineFunc"></a>
 ## type PipelineFunc
 
 PipelineFunc 便于直接以函数充当 PipelineInvoker。
 
 ```go
-type PipelineFunc func(update RequestSnapshot) <-chan StreamChunk
+type PipelineFunc func(ctx PipelineContext) <-chan StreamChunk
 ```
 
 <a name="PipelineFunc.Trigger"></a>
 ### func \(PipelineFunc\) Trigger
 
 ```go
-func (f PipelineFunc) Trigger(update RequestSnapshot) <-chan StreamChunk
+func (f PipelineFunc) Trigger(ctx PipelineContext) <-chan StreamChunk
 ```
 
 Trigger 实现 PipelineInvoker 接口。
@@ -212,7 +215,7 @@ PipelineInvoker 抽象命令/业务执行器。
 
 ```go
 type PipelineInvoker interface {
-    Trigger(update RequestSnapshot) <-chan StreamChunk
+    Trigger(ctx PipelineContext) <-chan StreamChunk
 }
 ```
 
@@ -229,7 +232,7 @@ type RequestSnapshot struct {
     ChatType    ChatType          // 会话类型，示例：single/chatroom（企业微信为 single/group，内部映射为 chatroom）
     Text        string            // 主要文本内容（若适用）
     Attachments []Attachment      // 标准化附件列表（图片/文件等）
-    Raw         any               // 平台原始结构引用，便于 Handler 深度使用
+    Raw         any               // 平台原始结构引用，便于 Pipeline 深度使用
     ResponseURL string            // 主动回复 URL（部分平台返回）
     Metadata    map[string]string // 扩展键值，如语言、平台等
 }
@@ -260,7 +263,7 @@ Route 定义单条路由规则。
 type Route struct {
     Name    string
     Matcher Matcher
-    Handler Handler
+    Handler PipelineInvoker
 }
 ```
 

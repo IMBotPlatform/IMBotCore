@@ -33,6 +33,19 @@ type Bot struct {
 	pipeline botcore.PipelineInvoker
 }
 
+// StartOptions 控制 Bot 启动 HTTP 服务的参数。
+// Fields:
+//   - ListenAddr: HTTP 监听地址（当 Server 未提供 Addr 时使用）
+//   - CallbackPath: 回调路径（为空则默认 /callback/command）
+//   - Mux: 可选路由复用器（为空则内部创建新的 *http.ServeMux）
+//   - Server: 可选 HTTP Server（为空则内部创建并使用 ListenAddr）
+type StartOptions struct {
+	ListenAddr   string
+	CallbackPath string
+	Mux          *http.ServeMux
+	Server       *http.Server
+}
+
 // NewBot 根据给定参数创建 Bot。
 // Parameters:
 //   - token: 企业微信配置的消息校验 Token
@@ -60,6 +73,55 @@ func NewBot(token, encodingAESKey, corpID string, streamMsgTTL, streamWaitTimeou
 		},
 		pipeline: pipeline,
 	}, nil
+}
+
+// Start 启动 HTTP 服务并挂载 Bot 回调路由。
+// Parameters:
+//   - opts: 启动参数（包含监听地址、回调路径、可选的 Mux/Server）
+//
+// Returns:
+//   - error: 启动失败或配置缺失时返回错误
+func (b *Bot) Start(opts StartOptions) error {
+	if b == nil {
+		return errors.New("bot is nil")
+	}
+
+	// 关键步骤：确定回调路径（为空则使用默认值）。
+	callbackPath := strings.TrimSpace(opts.CallbackPath)
+	if callbackPath == "" {
+		callbackPath = "/callback/command"
+	}
+
+	mux := opts.Mux
+	if mux == nil {
+		mux = http.NewServeMux()
+	}
+	// 关键步骤：注册回调路由到复用器。
+	mux.Handle(callbackPath, b)
+
+	srv := opts.Server
+	if srv == nil {
+		listenAddr := strings.TrimSpace(opts.ListenAddr)
+		if listenAddr == "" {
+			return errors.New("listen addr is required")
+		}
+		srv = &http.Server{
+			Addr:    listenAddr,
+			Handler: mux,
+		}
+	} else {
+		if srv.Handler == nil {
+			srv.Handler = mux
+		}
+		if strings.TrimSpace(srv.Addr) == "" {
+			srv.Addr = strings.TrimSpace(opts.ListenAddr)
+		}
+		if strings.TrimSpace(srv.Addr) == "" {
+			return errors.New("server addr is required")
+		}
+	}
+
+	return srv.ListenAndServe()
 }
 
 // ServeHTTP 实现 http.Handler 接口，根据请求方法转发至不同处理逻辑。
@@ -231,7 +293,11 @@ func (b *Bot) initial(msg *Message, timestamp, nonce string) (EncryptedResponse,
 
 	// 关键步骤：首包只负责触发流水线并返回空 ACK，内容由 refresh 拉取。
 	if isNew && b.pipeline != nil {
-		outCh := b.pipeline.Trigger(firstSnapshot)
+		pipelineCtx := botcore.PipelineContext{
+			Snapshot:  firstSnapshot,
+			Responser: b,
+		}
+		outCh := b.pipeline.Trigger(pipelineCtx)
 		if outCh != nil {
 			// 后台消费流水线输出，由 refresh 统一返回内容。
 			go b.doPipeline(outCh, stream.StreamID)
@@ -519,7 +585,7 @@ func (b *Bot) BuildFirstSnapshot(raw any) (botcore.RequestSnapshot, error) {
 	}, nil
 }
 
-// Send 向指定的 response_url 发送主动回复消息。
+// Response 向指定的 response_url 发送主动回复消息。
 // 对应文档：7_加解密说明.md - 如何主动回复消息
 // 注意：response_url 有效期为 1 小时，且每个 url 仅可调用一次。
 // Parameters:
@@ -528,7 +594,7 @@ func (b *Bot) BuildFirstSnapshot(raw any) (botcore.RequestSnapshot, error) {
 //
 // Returns:
 //   - error: 发送失败或序列化失败时返回
-func (b *Bot) Send(responseURL string, msg any) error {
+func (b *Bot) Response(responseURL string, msg any) error {
 	if responseURL == "" {
 		return fmt.Errorf("response_url is empty")
 	}
@@ -573,31 +639,31 @@ type MarkdownPayload struct {
 	Feedback *FeedbackInfo `json:"feedback,omitempty"` // 可选反馈信息
 }
 
-// SendMarkdown 发送 Markdown 消息。
+// ResponseMarkdown 发送 Markdown 消息。
 // Parameters:
 //   - responseURL: 企业微信回调中提供的 response_url
 //   - content: Markdown 文本内容
 //
 // Returns:
 //   - error: 发送失败时返回
-func (b *Bot) SendMarkdown(responseURL, content string) error {
+func (b *Bot) ResponseMarkdown(responseURL, content string) error {
 	msg := MarkdownMessage{
 		MsgType: "markdown",
 		Markdown: MarkdownPayload{
 			Content: content,
 		},
 	}
-	return b.Send(responseURL, msg)
+	return b.Response(responseURL, msg)
 }
 
-// SendTemplateCard 发送模板卡片消息。
+// ResponseTemplateCard 发送模板卡片消息。
 // Parameters:
 //   - responseURL: 企业微信回调中提供的 response_url
 //   - card: 模板卡片负载（需为 *TemplateCard）
 //
 // Returns:
 //   - error: 发送失败或类型不匹配时返回
-func (b *Bot) SendTemplateCard(responseURL string, card any) error {
+func (b *Bot) ResponseTemplateCard(responseURL string, card any) error {
 	typedCard, ok := card.(*TemplateCard)
 	if !ok {
 		return fmt.Errorf("invalid card type: expected *TemplateCard, got %T", card)
@@ -606,7 +672,7 @@ func (b *Bot) SendTemplateCard(responseURL string, card any) error {
 		MsgType:      "template_card",
 		TemplateCard: typedCard,
 	}
-	return b.Send(responseURL, msg)
+	return b.Response(responseURL, msg)
 }
 
 // BuildReply 将流式片段编码为平台响应。
