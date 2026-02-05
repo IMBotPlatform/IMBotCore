@@ -26,6 +26,7 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/botcore"
 - [type PipelineInvoker](<#PipelineInvoker>)
 - [type RequestSnapshot](<#RequestSnapshot>)
   - [func \(r RequestSnapshot\) SaveAttachments\(dir string\) \(\[\]SavedAttachment, error\)](<#RequestSnapshot.SaveAttachments>)
+- [type Responser](<#Responser>)
 - [type Route](<#Route>)
 - [type SavedAttachment](<#SavedAttachment>)
 - [type StreamChunk](<#StreamChunk>)
@@ -113,7 +114,13 @@ type Chain struct {
 func NewChain(defaultHandler PipelineInvoker) *Chain
 ```
 
-NewChain 创建一个新的责任链路由器。
+NewChain 创建一个新的责任链路由器。 Parameters:
+
+- defaultHandler: 默认处理器；为 nil 表示无默认处理
+
+Returns:
+
+- \*Chain: 初始化后的责任链路由器
 
 <a name="Chain.AddRoute"></a>
 ### func \(\*Chain\) AddRoute
@@ -122,7 +129,11 @@ NewChain 创建一个新的责任链路由器。
 func (c *Chain) AddRoute(name string, matcher Matcher, handler PipelineInvoker)
 ```
 
-AddRoute 添加一条路由规则。
+AddRoute 添加一条路由规则。 Parameters:
+
+- name: 路由名称（便于调试与日志）
+- matcher: 匹配规则
+- handler: 命中后执行的 PipelineInvoker
 
 <a name="Chain.Trigger"></a>
 ### func \(\*Chain\) Trigger
@@ -131,7 +142,13 @@ AddRoute 添加一条路由规则。
 func (c *Chain) Trigger(ctx PipelineContext) <-chan StreamChunk
 ```
 
-Trigger 实现 PipelineInvoker 接口。
+Trigger 实现 PipelineInvoker 接口。 Parameters:
+
+- ctx: Pipeline 执行上下文（包含 Snapshot 与 Responser）
+
+Returns:
+
+- \<\-chan StreamChunk: 流式输出片段通道（无匹配时可能返回 nil）
 
 <a name="ChatType"></a>
 ## type ChatType
@@ -167,7 +184,9 @@ type Matcher func(update RequestSnapshot) bool
 func MatchAny() Matcher
 ```
 
-MatchAny 返回一个总是匹配的 Matcher。
+MatchAny 返回一个总是匹配的 Matcher。 Returns:
+
+- Matcher: 永远返回 true 的匹配器
 
 <a name="MatchPrefix"></a>
 ### func MatchPrefix
@@ -176,12 +195,21 @@ MatchAny 返回一个总是匹配的 Matcher。
 func MatchPrefix(prefix string) Matcher
 ```
 
-MatchPrefix 返回一个匹配文本前缀的 Matcher。
+MatchPrefix 返回一个匹配文本前缀的 Matcher。 Parameters:
+
+- prefix: 需要匹配的文本前缀
+
+Returns:
+
+- Matcher: 当前前缀匹配器
 
 <a name="PipelineContext"></a>
 ## type PipelineContext
 
-PipelineContext 承载 Pipeline 执行所需的显式上下文。
+PipelineContext 承载 Pipeline 执行所需的显式上下文。 Fields:
+
+- Snapshot: 标准化首包快照
+- Responser: 主动回复能力（可为空，代表不支持主动回复）
 
 ```go
 type PipelineContext struct {
@@ -226,10 +254,11 @@ RequestSnapshot 描述首包请求的标准化快照。
 
 ```go
 type RequestSnapshot struct {
-    ID          string            // 平台内的唯一消息、事件或流会话 ID
-    SenderID    string            // 触发用户标识
-    ChatID      string            // 会话 ID（群、私聊等）
-    ChatType    ChatType          // 会话类型，示例：single/chatroom（企业微信为 single/group，内部映射为 chatroom）
+    ID       string   // 平台内的唯一消息、事件或流会话 ID
+    SenderID string   // 触发用户标识
+    ChatID   string   // 会话 ID（群、私聊等）
+    ChatType ChatType // 会话类型，示例：single/chatroom（企业微信为 single/group，内部映射为 chatroom）
+
     Text        string            // 主要文本内容（若适用）
     Attachments []Attachment      // 标准化附件列表（图片/文件等）
     Raw         any               // 平台原始结构引用，便于 Pipeline 深度使用
@@ -253,6 +282,28 @@ Returns:
 
 - \[\]SavedAttachment: 每个附件的保存结果
 - error: 只要有任意附件失败则返回非空错误
+
+<a name="Responser"></a>
+## type Responser
+
+Responser 定义主动发送能力的抽象接口。 Parameters:
+
+- responseURL: 平台回调中提供的 response\_url
+- msg/content/card: 待发送内容
+
+Returns:
+
+- error: 发送失败时返回
+
+该接口用于将平台实现（如 wecom.Bot）注入到 Manager 中，避免构造期循环依赖。
+
+```go
+type Responser interface {
+    Response(responseURL string, msg any) error
+    ResponseMarkdown(responseURL, content string) error
+    ResponseTemplateCard(responseURL string, card any) error
+}
+```
 
 <a name="Route"></a>
 ## type Route

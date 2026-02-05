@@ -10,30 +10,24 @@ import "github.com/IMBotPlatform/IMBotCore/pkg/command"
 
 - [Variables](<#variables>)
 - [func WithExecutionContext\(ctx context.Context, execCtx \*ExecutionContext\) context.Context](<#WithExecutionContext>)
-- [type CommandFactory](<#CommandFactory>)
-- [type ContextValues](<#ContextValues>)
-- [type ConversationStore](<#ConversationStore>)
+- [type CommandFunc](<#CommandFunc>)
 - [type ExecutionContext](<#ExecutionContext>)
   - [func FromContext\(ctx context.Context\) \*ExecutionContext](<#FromContext>)
-  - [func \(ctx \*ExecutionContext\) ConversationKey\(\) string](<#ExecutionContext.ConversationKey>)
-  - [func \(ctx \*ExecutionContext\) Responder\(\) Responder](<#ExecutionContext.Responder>)
-  - [func \(ctx \*ExecutionContext\) SetNoResponse\(\)](<#ExecutionContext.SetNoResponse>)
-  - [func \(ctx \*ExecutionContext\) SetResponsePayload\(payload any\)](<#ExecutionContext.SetResponsePayload>)
+  - [func \(ctx \*ExecutionContext\) Response\(msg any\) error](<#ExecutionContext.Response>)
+  - [func \(ctx \*ExecutionContext\) ResponseMarkdown\(content string\) error](<#ExecutionContext.ResponseMarkdown>)
+  - [func \(ctx \*ExecutionContext\) ResponseTemplateCard\(card any\) error](<#ExecutionContext.ResponseTemplateCard>)
+  - [func \(ctx \*ExecutionContext\) SendNoResponse\(\)](<#ExecutionContext.SendNoResponse>)
+  - [func \(ctx \*ExecutionContext\) SendPayload\(payload any\)](<#ExecutionContext.SendPayload>)
 - [type Manager](<#Manager>)
-  - [func NewManager\(factory CommandFactory, store ConversationStore, opts ...ManagerOption\) \*Manager](<#NewManager>)
-  - [func \(m \*Manager\) Trigger\(update botcore.RequestSnapshot\) \<\-chan botcore.StreamChunk](<#Manager.Trigger>)
+  - [func NewManager\(factory CommandFunc, opts ...ManagerOption\) \*Manager](<#NewManager>)
+  - [func \(m \*Manager\) Trigger\(pipelineCtx botcore.PipelineContext\) \<\-chan botcore.StreamChunk](<#Manager.Trigger>)
 - [type ManagerOption](<#ManagerOption>)
   - [func WithLogger\(l \*log.Logger\) ManagerOption](<#WithLogger>)
-  - [func WithResponder\(r Responder\) ManagerOption](<#WithResponder>)
-- [type MemoryStore](<#MemoryStore>)
-  - [func NewMemoryStore\(\) \*MemoryStore](<#NewMemoryStore>)
-  - [func \(s \*MemoryStore\) Load\(key string\) \(ContextValues, error\)](<#MemoryStore.Load>)
-  - [func \(s \*MemoryStore\) Save\(key string, values ContextValues\) error](<#MemoryStore.Save>)
+  - [func WithResponser\(r botcore.Responser\) ManagerOption](<#WithResponser>)
 - [type ParseResult](<#ParseResult>)
 - [type Parser](<#Parser>)
   - [func NewParser\(\) Parser](<#NewParser>)
   - [func \(p Parser\) Parse\(text string\) ParseResult](<#Parser.Parse>)
-- [type Responder](<#Responder>)
 - [type StreamWriter](<#StreamWriter>)
   - [func NewStreamWriter\(ch chan\<\- botcore.StreamChunk\) \*StreamWriter](<#NewStreamWriter>)
   - [func \(w \*StreamWriter\) Write\(p \[\]byte\) \(n int, err error\)](<#StreamWriter.Write>)
@@ -61,34 +55,13 @@ func WithExecutionContext(ctx context.Context, execCtx *ExecutionContext) contex
 
 WithExecutionContext 将 ExecutionContext 注入到标准 context.Context 中。
 
-<a name="CommandFactory"></a>
-## type CommandFactory
+<a name="CommandFunc"></a>
+## type CommandFunc
 
-CommandFactory 定义创建 Cobra 命令树的工厂函数类型。 在 HTTP 服务中，每个请求必须拥有独立的命令对象实例，以避免 Flag 解析的并发冲突。
-
-```go
-type CommandFactory func() *cobra.Command
-```
-
-<a name="ContextValues"></a>
-## type ContextValues
-
-ContextValues 存储命令执行过程中的上下文扩展字段。
+CommandFunc 定义创建 Cobra 命令树的工厂函数类型。 在 HTTP 服务中，每个请求必须拥有独立的命令对象实例，以避免 Flag 解析的并发冲突。
 
 ```go
-type ContextValues map[string]string
-```
-
-<a name="ConversationStore"></a>
-## type ConversationStore
-
-ConversationStore 定义上下文存取接口，便于替换实现。
-
-```go
-type ConversationStore interface {
-    Load(key string) (ContextValues, error)
-    Save(key string, values ContextValues) error
-}
+type CommandFunc func() *cobra.Command
 ```
 
 <a name="ExecutionContext"></a>
@@ -99,8 +72,6 @@ ExecutionContext 为命令 handler 提供必要的环境信息。
 ```go
 type ExecutionContext struct {
     RequestSnapshot botcore.RequestSnapshot
-    Values          ContextValues
-    Store           ConversationStore
     // contains filtered or unexported fields
 }
 ```
@@ -114,41 +85,68 @@ func FromContext(ctx context.Context) *ExecutionContext
 
 FromContext 从标准 context.Context 中提取 ExecutionContext。
 
-<a name="ExecutionContext.ConversationKey"></a>
-### func \(\*ExecutionContext\) ConversationKey
+<a name="ExecutionContext.Response"></a>
+### func \(\*ExecutionContext\) Response
 
 ```go
-func (ctx *ExecutionContext) ConversationKey() string
+func (ctx *ExecutionContext) Response(msg any) error
 ```
 
-ConversationKey 返回当前上下文在存储中的唯一 key。
+Response 发送主动回复消息。 Parameters:
 
-<a name="ExecutionContext.Responder"></a>
-### func \(\*ExecutionContext\) Responder
+- msg: 平台消息负载
+
+Returns:
+
+- error: 发送失败时返回
+
+<a name="ExecutionContext.ResponseMarkdown"></a>
+### func \(\*ExecutionContext\) ResponseMarkdown
 
 ```go
-func (ctx *ExecutionContext) Responder() Responder
+func (ctx *ExecutionContext) ResponseMarkdown(content string) error
 ```
 
-Responder 返回主动消息发送器。
+ResponseMarkdown 发送 Markdown 主动回复。 Parameters:
 
-<a name="ExecutionContext.SetNoResponse"></a>
-### func \(\*ExecutionContext\) SetNoResponse
+- content: Markdown 文本内容
+
+Returns:
+
+- error: 发送失败时返回
+
+<a name="ExecutionContext.ResponseTemplateCard"></a>
+### func \(\*ExecutionContext\) ResponseTemplateCard
 
 ```go
-func (ctx *ExecutionContext) SetNoResponse()
+func (ctx *ExecutionContext) ResponseTemplateCard(card any) error
 ```
 
-SetNoResponse 立即发送静默信号。 Bot 层收到此信号后将直接返回 HTTP 200 OK 空包。
+ResponseTemplateCard 发送模板卡片主动回复。 Parameters:
 
-<a name="ExecutionContext.SetResponsePayload"></a>
-### func \(\*ExecutionContext\) SetResponsePayload
+- card: 模板卡片负载
+
+Returns:
+
+- error: 发送失败时返回
+
+<a name="ExecutionContext.SendNoResponse"></a>
+### func \(\*ExecutionContext\) SendNoResponse
 
 ```go
-func (ctx *ExecutionContext) SetResponsePayload(payload any)
+func (ctx *ExecutionContext) SendNoResponse()
 ```
 
-SetResponsePayload 立即发送非流式响应对象。
+SendNoResponse 立即发送静默信号。 Bot 层收到此信号后将直接返回 HTTP 200 OK 空包。
+
+<a name="ExecutionContext.SendPayload"></a>
+### func \(\*ExecutionContext\) SendPayload
+
+```go
+func (ctx *ExecutionContext) SendPayload(payload any)
+```
+
+SendPayload 立即发送非流式响应对象。
 
 <a name="Manager"></a>
 ## type Manager
@@ -165,16 +163,16 @@ type Manager struct {
 ### func NewManager
 
 ```go
-func NewManager(factory CommandFactory, store ConversationStore, opts ...ManagerOption) *Manager
+func NewManager(factory CommandFunc, opts ...ManagerOption) *Manager
 ```
 
-NewManager 绑定命令工厂与存储，返回实现 PipelineInvoker 的管理器。
+NewManager 绑定命令构建函数，返回实现 PipelineInvoker 的管理器。
 
 <a name="Manager.Trigger"></a>
 ### func \(\*Manager\) Trigger
 
 ```go
-func (m *Manager) Trigger(ctx botcore.PipelineContext) <-chan botcore.StreamChunk
+func (m *Manager) Trigger(pipelineCtx botcore.PipelineContext) <-chan botcore.StreamChunk
 ```
 
 Trigger 满足 botcore.PipelineInvoker，为每个请求构建独立的命令树并执行。
@@ -197,52 +195,14 @@ func WithLogger(l *log.Logger) ManagerOption
 
 WithLogger 注入自定义日志记录器。
 
-<a name="WithResponder"></a>
-### func WithResponder
+<a name="WithResponser"></a>
+### func WithResponser
 
 ```go
-func WithResponder(r Responder) ManagerOption
+func WithResponser(r botcore.Responser) ManagerOption
 ```
 
-WithResponder 注入主动消息发送器。
-
-<a name="MemoryStore"></a>
-## type MemoryStore
-
-MemoryStore 提供简单的基于内存的上下文存储实现。 仅用于命令执行期的上下文键值（非聊天历史）；进程重启即丢失。
-
-```go
-type MemoryStore struct {
-    // contains filtered or unexported fields
-}
-```
-
-<a name="NewMemoryStore"></a>
-### func NewMemoryStore
-
-```go
-func NewMemoryStore() *MemoryStore
-```
-
-NewMemoryStore 创建内存存储实例。
-
-<a name="MemoryStore.Load"></a>
-### func \(\*MemoryStore\) Load
-
-```go
-func (s *MemoryStore) Load(key string) (ContextValues, error)
-```
-
-Load 返回指定 key 的上下文副本。
-
-<a name="MemoryStore.Save"></a>
-### func \(\*MemoryStore\) Save
-
-```go
-func (s *MemoryStore) Save(key string, values ContextValues) error
-```
-
-Save 合并并存储上下文增量。
+WithResponser 注入主动消息发送器（当 PipelineContext.Responser 为空时作为兜底）。
 
 <a name="ParseResult"></a>
 ## type ParseResult
@@ -286,19 +246,6 @@ func (p Parser) Parse(text string) ParseResult
 ```
 
 Parse 将文本拆解为命令 token。规则参考 Telegram Message.IsCommand。
-
-<a name="Responder"></a>
-## type Responder
-
-Responder 定义命令执行过程中的主动发送能力。
-
-```go
-type Responder interface {
-    Response(responseURL string, msg any) error
-    ResponseMarkdown(responseURL, content string) error
-    ResponseTemplateCard(responseURL string, card any) error
-}
-```
 
 <a name="StreamWriter"></a>
 ## type StreamWriter
