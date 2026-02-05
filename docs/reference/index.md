@@ -5,6 +5,7 @@
 - [botcore](botcore.md)
 - [callback](callback.md)
 - [command](command.md)
+- [container](container.md)
 - [platform/wecom](platform-wecom.md)
 - [scheduler](scheduler.md)
 - [workspace](workspace.md)
