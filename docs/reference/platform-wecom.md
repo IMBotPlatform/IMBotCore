@@ -6,150 +6,75 @@
 import "github.com/IMBotPlatform/IMBotCore/pkg/platform/wecom"
 ```
 
+Package wecom 提供企业微信平台的 botcore 适配层。 通过 wecomproto SDK 实现协议细节，本包负责 botcore 接口适配。
+
+Package wecom 提供企业微信平台的 botcore 适配层。 通过 wecomproto SDK 实现协议细节，本包负责 botcore 接口适配。
+
 ## Index
 
-- [Variables](<#variables>)
-- [type ActionItem](<#ActionItem>)
-- [type ActionMenu](<#ActionMenu>)
-- [type AttachmentPayload](<#AttachmentPayload>)
+- [func BuildStreamReply\(streamID, content string, finish bool\) wecomproto.StreamReply](<#BuildStreamReply>)
+- [func CalcSignature\(token, timestamp, nonce, data string\) string](<#CalcSignature>)
+- [func NewCrypt\(token, encodingAESKey, corpID string\) \(\*wecomproto.Crypt, error\)](<#NewCrypt>)
 - [type Bot](<#Bot>)
   - [func NewBot\(token, encodingAESKey, corpID string, streamMsgTTL, streamWaitTimeout time.Duration, pipeline botcore.PipelineInvoker\) \(\*Bot, error\)](<#NewBot>)
-  - [func \(b \*Bot\) BuildFirstSnapshot\(raw any\) \(botcore.RequestSnapshot, error\)](<#Bot.BuildFirstSnapshot>)
-  - [func \(b \*Bot\) BuildReply\(firstSnapshot botcore.RequestSnapshot, chunk botcore.StreamChunk\) \(any, error\)](<#Bot.BuildReply>)
   - [func \(b \*Bot\) Response\(responseURL string, msg any\) error](<#Bot.Response>)
   - [func \(b \*Bot\) ResponseMarkdown\(responseURL, content string\) error](<#Bot.ResponseMarkdown>)
   - [func \(b \*Bot\) ResponseTemplateCard\(responseURL string, card any\) error](<#Bot.ResponseTemplateCard>)
-  - [func \(b \*Bot\) ServeHTTP\(w http.ResponseWriter, r \*http.Request\)](<#Bot.ServeHTTP>)
-  - [func \(b \*Bot\) Start\(opts StartOptions\) error](<#Bot.Start>)
-- [type Button](<#Button>)
-- [type CardAction](<#CardAction>)
-- [type CardImage](<#CardImage>)
-- [type Checkbox](<#Checkbox>)
-- [type CheckboxOption](<#CheckboxOption>)
-- [type Crypt](<#Crypt>)
-  - [func NewCrypt\(token, encodingAESKey, corpID string\) \(\*Crypt, error\)](<#NewCrypt>)
-  - [func \(c \*Crypt\) DecryptMessage\(msgSignature, timestamp, nonce string, req EncryptedRequest\) \(\*Message, error\)](<#Crypt.DecryptMessage>)
-  - [func \(c \*Crypt\) EncryptResponse\(payload any, timestamp, nonce string\) \(EncryptedResponse, error\)](<#Crypt.EncryptResponse>)
-  - [func \(c \*Crypt\) VerifyURL\(msgSignature, timestamp, nonce, echoStr string\) \(string, error\)](<#Crypt.VerifyURL>)
-- [type EmphasisContent](<#EmphasisContent>)
+- [type BotResponser](<#BotResponser>)
+  - [func \(r \*BotResponser\) Response\(responseURL string, msg any\) error](<#BotResponser.Response>)
+  - [func \(r \*BotResponser\) ResponseMarkdown\(responseURL, content string\) error](<#BotResponser.ResponseMarkdown>)
+  - [func \(r \*BotResponser\) ResponseTemplateCard\(responseURL string, card any\) error](<#BotResponser.ResponseTemplateCard>)
 - [type EncryptedRequest](<#EncryptedRequest>)
 - [type EncryptedResponse](<#EncryptedResponse>)
-- [type EventPayload](<#EventPayload>)
-- [type FeedbackEvent](<#FeedbackEvent>)
-- [type FeedbackInfo](<#FeedbackInfo>)
-- [type FilePayload](<#FilePayload>)
-- [type HorizontalContent](<#HorizontalContent>)
-- [type ImagePayload](<#ImagePayload>)
-- [type ImageTextArea](<#ImageTextArea>)
-- [type JumpAction](<#JumpAction>)
-- [type MainTitle](<#MainTitle>)
 - [type MarkdownMessage](<#MarkdownMessage>)
 - [type MarkdownPayload](<#MarkdownPayload>)
 - [type Message](<#Message>)
 - [type MessageSender](<#MessageSender>)
-- [type MixedItem](<#MixedItem>)
-- [type MixedPayload](<#MixedPayload>)
-- [type OptionIDs](<#OptionIDs>)
-- [type QuoteArea](<#QuoteArea>)
-- [type QuotePayload](<#QuotePayload>)
-- [type SelectOption](<#SelectOption>)
-- [type SelectedItem](<#SelectedItem>)
-- [type SelectedItems](<#SelectedItems>)
-- [type SelectionItem](<#SelectionItem>)
-- [type Source](<#Source>)
+- [type PipelineAdapter](<#PipelineAdapter>)
+  - [func NewPipelineAdapter\(pipeline botcore.PipelineInvoker\) \*PipelineAdapter](<#NewPipelineAdapter>)
+  - [func \(a \*PipelineAdapter\) Handle\(ctx wecomproto.Context\) \<\-chan wecomproto.Chunk](<#PipelineAdapter.Handle>)
 - [type StartOptions](<#StartOptions>)
-- [type Stream](<#Stream>)
-- [type StreamManager](<#StreamManager>)
 - [type StreamPayload](<#StreamPayload>)
-- [type StreamReply](<#StreamReply>)
-- [type StreamReplyBody](<#StreamReplyBody>)
-- [type StreamWithTemplateCardMessage](<#StreamWithTemplateCardMessage>)
-- [type SubmitButton](<#SubmitButton>)
 - [type TemplateCard](<#TemplateCard>)
-- [type TemplateCardEvent](<#TemplateCardEvent>)
 - [type TemplateCardMessage](<#TemplateCardMessage>)
-- [type TextMessage](<#TextMessage>)
 - [type TextPayload](<#TextPayload>)
-- [type UpdateTemplateCardMessage](<#UpdateTemplateCardMessage>)
-- [type VerticalContent](<#VerticalContent>)
-- [type VoicePayload](<#VoicePayload>)
 
 
-## Variables
-
-<a name="ErrInvalidSignature"></a>
+<a name="BuildStreamReply"></a>
+## func BuildStreamReply
 
 ```go
-var (
-    // ErrInvalidSignature 在签名校验失败时返回。
-    ErrInvalidSignature = errors.New("invalid signature")
-    // ErrInvalidAESKey 当 AESKey 长度不符合规范时返回。
-    ErrInvalidAESKey = errors.New("invalid aes key length")
-)
+func BuildStreamReply(streamID, content string, finish bool) wecomproto.StreamReply
 ```
 
-<a name="ErrNoResponse"></a>
+BuildStreamReply 构建流式回复（委托给 wecomproto）。
+
+<a name="CalcSignature"></a>
+## func CalcSignature
 
 ```go
-var (
-    // ErrNoResponse 表示业务层请求不进行任何被动回复（HTTP 200 OK 空包）。
-    ErrNoResponse = errors.New("no response")
-)
+func CalcSignature(token, timestamp, nonce, data string) string
 ```
 
-<a name="ActionItem"></a>
-## type ActionItem
+CalcSignature 计算签名（委托给 wecomproto）。
 
-ActionItem 操作列表项
+<a name="NewCrypt"></a>
+## func NewCrypt
 
 ```go
-type ActionItem struct {
-    Text string `json:"text"` // 操作的描述文案
-    Key  string `json:"key"`  // 操作key值
-}
+func NewCrypt(token, encodingAESKey, corpID string) (*wecomproto.Crypt, error)
 ```
 
-<a name="ActionMenu"></a>
-## type ActionMenu
-
-ActionMenu 卡片右上角更多操作按钮
-
-```go
-type ActionMenu struct {
-    Desc       string       `json:"desc"`        // 更多操作界面的描述
-    ActionList []ActionItem `json:"action_list"` // 操作列表 [1, 3]
-}
-```
-
-<a name="AttachmentPayload"></a>
-## type AttachmentPayload
-
-AttachmentPayload 智能应用回调附件
-
-```go
-type AttachmentPayload struct {
-    CallbackID string `json:"callback_id"` // 回调 ID
-    Actions    []struct {
-        Name  string `json:"name"`  // 动作名称
-        Value string `json:"value"` // 动作值
-        Type  string `json:"type"`  // 动作类型
-    }   `json:"actions"`
-}
-```
+NewCrypt 创建加解密器（委托给 wecomproto）。
 
 <a name="Bot"></a>
 ## type Bot
 
-Bot 集成企业微信回调处理与流式响应逻辑。 Fields:
-
-- streamMgr: 管理流式会话生命周期的 StreamManager
-- crypto: 负责签名校验与加解密的 Crypt
-- client: 主动回复客户端，负责向 response\_url 发送消息
-- pipeline: 首包触发的业务流水线实现，可为空
+Bot 是对 wecomproto.Bot 的包装，支持 botcore.PipelineInvoker。
 
 ```go
 type Bot struct {
-    // contains filtered or unexported fields
+    *wecomproto.Bot
 }
 ```
 
@@ -160,52 +85,19 @@ type Bot struct {
 func NewBot(token, encodingAESKey, corpID string, streamMsgTTL, streamWaitTimeout time.Duration, pipeline botcore.PipelineInvoker) (*Bot, error)
 ```
 
-NewBot 根据给定参数创建 Bot。 Parameters:
+NewBot 创建集成 botcore.PipelineInvoker 的企业微信 Bot。 Parameters:
 
 - token: 企业微信配置的消息校验 Token
 - encodingAESKey: 企业微信后台生成的 43 字节 Base64 编码字符串
 - corpID: 企业 ID，用于校验消息归属
-- sessionTTL: 流式会话最大存活时间（\<=0 时使用 StreamManager 默认值）
-- streamWaitTimeout: 刷新请求等待流水线片段的最大时长（\<=0 时使用 StreamManager 默认值）
+- streamMsgTTL: 流式会话最大存活时间（\<=0 时使用默认值）
+- streamWaitTimeout: 刷新请求等待流水线片段的最大时长（\<=0 时使用默认值）
 - pipeline: 首包触发的业务流水线实现，可为 nil
 
 Returns:
 
 - \*Bot: 成功初始化的 Bot 实例
 - error: 当加解密上下文初始化失败时返回错误
-
-<a name="Bot.BuildFirstSnapshot"></a>
-### func \(\*Bot\) BuildFirstSnapshot
-
-```go
-func (b *Bot) BuildFirstSnapshot(raw any) (botcore.RequestSnapshot, error)
-```
-
-BuildFirstSnapshot 构建首包快照。 Parameters:
-
-- raw: 平台原始消息结构
-
-Returns:
-
-- botcore.RequestSnapshot: 标准化首包快照
-- error: 构建失败时返回
-
-<a name="Bot.BuildReply"></a>
-### func \(\*Bot\) BuildReply
-
-```go
-func (b *Bot) BuildReply(firstSnapshot botcore.RequestSnapshot, chunk botcore.StreamChunk) (any, error)
-```
-
-BuildReply 将流式片段编码为平台响应。 Parameters:
-
-- snapshot: 首包快照
-- chunk: 流式片段
-
-Returns:
-
-- any: 平台响应负载
-- error: 编码失败时返回
 
 <a name="Bot.Response"></a>
 ### func \(\*Bot\) Response
@@ -214,14 +106,7 @@ Returns:
 func (b *Bot) Response(responseURL string, msg any) error
 ```
 
-Response 向指定的 response\_url 发送主动回复消息。 对应文档：7\_加解密说明.md \- 如何主动回复消息 注意：response\_url 有效期为 1 小时，且每个 url 仅可调用一次。 Parameters:
-
-- responseURL: 企业微信回调中提供的 response\_url
-- msg: 待发送的消息负载（会被序列化为 JSON）
-
-Returns:
-
-- error: 发送失败或序列化失败时返回
+Response 实现 botcore.Responser 接口。
 
 <a name="Bot.ResponseMarkdown"></a>
 ### func \(\*Bot\) ResponseMarkdown
@@ -230,14 +115,7 @@ Returns:
 func (b *Bot) ResponseMarkdown(responseURL, content string) error
 ```
 
-ResponseMarkdown 发送 Markdown 消息。 Parameters:
-
-- responseURL: 企业微信回调中提供的 response\_url
-- content: Markdown 文本内容
-
-Returns:
-
-- error: 发送失败时返回
+ResponseMarkdown 实现 botcore.Responser 接口。
 
 <a name="Bot.ResponseTemplateCard"></a>
 ### func \(\*Bot\) ResponseTemplateCard
@@ -246,795 +124,172 @@ Returns:
 func (b *Bot) ResponseTemplateCard(responseURL string, card any) error
 ```
 
-ResponseTemplateCard 发送模板卡片消息。 Parameters:
+ResponseTemplateCard 实现 botcore.Responser 接口。
 
-- responseURL: 企业微信回调中提供的 response\_url
-- card: 模板卡片负载（需为 \*TemplateCard）
+<a name="BotResponser"></a>
+## type BotResponser
 
-Returns:
-
-- error: 发送失败或类型不匹配时返回
-
-<a name="Bot.ServeHTTP"></a>
-### func \(\*Bot\) ServeHTTP
+BotResponser 适配 wecomproto.Bot 为 botcore.Responser。
 
 ```go
-func (b *Bot) ServeHTTP(w http.ResponseWriter, r *http.Request)
-```
-
-ServeHTTP 实现 http.Handler 接口，根据请求方法转发至不同处理逻辑。 Parameters:
-
-- w: http.ResponseWriter，用于写回响应
-- r: \*http.Request，请求上下文
-
-<a name="Bot.Start"></a>
-### func \(\*Bot\) Start
-
-```go
-func (b *Bot) Start(opts StartOptions) error
-```
-
-Start 启动 HTTP 服务并挂载 Bot 回调路由。 Parameters:
-
-- opts: 启动参数（包含监听地址、回调路径、可选的 Mux/Server）
-
-Returns:
-
-- error: 启动失败或配置缺失时返回错误
-
-<a name="Button"></a>
-## type Button
-
-Button 按钮列表
-
-```go
-type Button struct {
-    Text  string `json:"text"`            // 按钮文案
-    Style int    `json:"style,omitempty"` // 按钮样式 1~4
-    Key   string `json:"key"`             // 按钮key
-}
-```
-
-<a name="CardAction"></a>
-## type CardAction
-
-CardAction 整体卡片的点击跳转事件
-
-```go
-type CardAction struct {
-    Type     int    `json:"type"`               // 跳转类型: 1url, 2小程序
-    URL      string `json:"url,omitempty"`      // 跳转url
-    AppID    string `json:"appid,omitempty"`    // 小程序appid
-    PagePath string `json:"pagepath,omitempty"` // 小程序pagepath
-}
-```
-
-<a name="CardImage"></a>
-## type CardImage
-
-CardImage 图片样式
-
-```go
-type CardImage struct {
-    URL         string  `json:"url"`                    // 图片url
-    AspectRatio float64 `json:"aspect_ratio,omitempty"` // 宽高比 1.3 ~ 2.25
-}
-```
-
-<a name="Checkbox"></a>
-## type Checkbox
-
-Checkbox 选择题样式
-
-```go
-type Checkbox struct {
-    QuestionKey string           `json:"question_key"`      // 题目key
-    Disable     bool             `json:"disable,omitempty"` // 是否不可选 (更新时有效)
-    Mode        int              `json:"mode,omitempty"`    // 模式: 0单选, 1多选
-    OptionList  []CheckboxOption `json:"option_list"`       // 选项列表
-}
-```
-
-<a name="CheckboxOption"></a>
-## type CheckboxOption
-
-CheckboxOption 选择题选项
-
-```go
-type CheckboxOption struct {
-    ID        string `json:"id"`         // 选项id
-    Text      string `json:"text"`       // 选项文案
-    IsChecked bool   `json:"is_checked"` // 是否默认选中
-}
-```
-
-<a name="Crypt"></a>
-## type Crypt
-
-Crypt 封装企业微信的加解密逻辑。
-
-```go
-type Crypt struct {
+type BotResponser struct {
     // contains filtered or unexported fields
 }
 ```
 
-<a name="NewCrypt"></a>
-### func NewCrypt
+<a name="BotResponser.Response"></a>
+### func \(\*BotResponser\) Response
 
 ```go
-func NewCrypt(token, encodingAESKey, corpID string) (*Crypt, error)
+func (r *BotResponser) Response(responseURL string, msg any) error
 ```
 
-NewCrypt 创建一个新的 Crypt 实例，使用企业微信提供的 token、加密密钥与 corpID 作为上下文。 Parameters:
+Response 实现 botcore.Responser 接口。
 
-- token: 企业微信配置的消息校验 Token
-- encodingAESKey: 企业微信后台生成的 43 字节 Base64 编码字符串
-- corpID: 企业 ID，用于校验消息归属
-
-Returns:
-
-- \*Crypt: 成功时的加解密器实例
-- error: 当 EncodingAESKey 无法解码或长度不合法时返回错误
-
-<a name="Crypt.DecryptMessage"></a>
-### func \(\*Crypt\) DecryptMessage
+<a name="BotResponser.ResponseMarkdown"></a>
+### func \(\*BotResponser\) ResponseMarkdown
 
 ```go
-func (c *Crypt) DecryptMessage(msgSignature, timestamp, nonce string, req EncryptedRequest) (*Message, error)
+func (r *BotResponser) ResponseMarkdown(responseURL, content string) error
 ```
 
-DecryptMessage 解密 POST 回调中的加密消息，并返回结构化后的 Message。 Parameters:
+ResponseMarkdown 实现 botcore.Responser 接口。
 
-- msgSignature: 企业微信用于签名的字段
-- timestamp: 时间戳
-- nonce: 随机串
-- req: 包含 encrypt 字段的回调体
-
-Returns:
-
-- \*Message: 成功解密并解析后的业务消息
-- error: 签名校验失败、解密失败或 JSON 解析失败时返回
-
-流程图：
-
-```
-[收到加密请求]
-     |
-     v
-[校验签名] --否--> [返回ErrInvalidSignature]
-     |
-    是
-     |
-     v
-[Base64解密+AES-CBC解密]
-     |
-     v
-[JSON解析为Message]
-     |
-     v
-[返回Message]
-```
-
-<a name="Crypt.EncryptResponse"></a>
-### func \(\*Crypt\) EncryptResponse
+<a name="BotResponser.ResponseTemplateCard"></a>
+### func \(\*BotResponser\) ResponseTemplateCard
 
 ```go
-func (c *Crypt) EncryptResponse(payload any, timestamp, nonce string) (EncryptedResponse, error)
+func (r *BotResponser) ResponseTemplateCard(responseURL string, card any) error
 ```
 
-EncryptResponse 对回复明文进行加密封装。 Parameters:
-
-- payload: 待发送的明文结构体（如 StreamReply, TextMessage, TemplateCardMessage 等）
-- timestamp: 调用方生成的时间戳字符串
-- nonce: 回调参数中的随机串
-
-Returns:
-
-- EncryptedResponse: 包含密文、签名等字段的响应包
-- error: 序列化或加密失败时返回
-
-流程图：
-
-```
-[响应明文] -> [JSON序列化] -> [AES组包加密] -> [生成签名] -> [封装响应]
-```
-
-<a name="Crypt.VerifyURL"></a>
-### func \(\*Crypt\) VerifyURL
-
-```go
-func (c *Crypt) VerifyURL(msgSignature, timestamp, nonce, echoStr string) (string, error)
-```
-
-
-
-<a name="EmphasisContent"></a>
-## type EmphasisContent
-
-EmphasisContent 关键数据样式
-
-```go
-type EmphasisContent struct {
-    Title string `json:"title,omitempty"` // 关键数据内容
-    Desc  string `json:"desc,omitempty"`  // 关键数据描述
-}
-```
+ResponseTemplateCard 实现 botcore.Responser 接口。
 
 <a name="EncryptedRequest"></a>
 ## type EncryptedRequest
 
-EncryptedRequest 对应企业微信 POST 回调中的加密请求格式。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type EncryptedRequest struct {
-    Encrypt string `json:"encrypt"` // 企业微信回调中的加密字符串
-}
+type EncryptedRequest = wecomproto.EncryptedRequest
 ```
 
 <a name="EncryptedResponse"></a>
 ## type EncryptedResponse
 
-EncryptedResponse 表示向企业微信回复的加密数据包。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type EncryptedResponse struct {
-    Encrypt      string `json:"encrypt"`      // Base64 编码的密文
-    MsgSignature string `json:"msgsignature"` // 签名，用于企业微信校验
-    Timestamp    string `json:"timestamp"`    // 时间戳
-    Nonce        string `json:"nonce"`        // 随机串
-}
-```
-
-<a name="EventPayload"></a>
-## type EventPayload
-
-EventPayload 事件结构体
-
-```go
-type EventPayload struct {
-    EventType         string             `json:"eventtype"`                     // 事件类型标识
-    EnterChat         *struct{}          `json:"enter_chat,omitempty"`          // 进入会话事件
-    TemplateCardEvent *TemplateCardEvent `json:"template_card_event,omitempty"` // 模板卡片事件
-    FeedbackEvent     *FeedbackEvent     `json:"feedback_event,omitempty"`      // 反馈事件
-}
-```
-
-<a name="FeedbackEvent"></a>
-## type FeedbackEvent
-
-FeedbackEvent 用户反馈事件
-
-```go
-type FeedbackEvent struct {
-    ID                   string `json:"id"`                               // 反馈ID
-    Type                 int    `json:"type"`                             // 1:准确, 2:不准确, 3:取消
-    Content              string `json:"content,omitempty"`                // 反馈内容
-    InaccurateReasonList []int  `json:"inaccurate_reason_list,omitempty"` // 负反馈原因
-}
-```
-
-<a name="FeedbackInfo"></a>
-## type FeedbackInfo
-
-FeedbackInfo 反馈信息 \(用于主动回复\)
-
-```go
-type FeedbackInfo struct {
-    ID string `json:"id,omitempty"` // 反馈ID
-}
-```
-
-<a name="FilePayload"></a>
-## type FilePayload
-
-FilePayload 为文件消息内容。
-
-```go
-type FilePayload struct {
-    URL string `json:"url"` // 文件下载地址
-}
-```
-
-<a name="HorizontalContent"></a>
-## type HorizontalContent
-
-HorizontalContent 二级标题\+文本列表
-
-```go
-type HorizontalContent struct {
-    Type    int    `json:"type,omitempty"`   // 链接类型: 0普通文本, 1跳转url, 3点击跳转成员详情
-    KeyName string `json:"keyname"`          // 二级标题
-    Value   string `json:"value,omitempty"`  // 二级文本
-    URL     string `json:"url,omitempty"`    // 跳转url
-    UserID  string `json:"userid,omitempty"` // 成员详情userid
-}
-```
-
-<a name="ImagePayload"></a>
-## type ImagePayload
-
-ImagePayload 为图片消息内容。
-
-```go
-type ImagePayload struct {
-    URL    string `json:"url,omitempty"`    // 图片访问地址
-    Base64 string `json:"base64,omitempty"` // 流式回复时使用
-    MD5    string `json:"md5,omitempty"`    // 流式回复时使用
-}
-```
-
-<a name="ImageTextArea"></a>
-## type ImageTextArea
-
-ImageTextArea 左图右文样式
-
-```go
-type ImageTextArea struct {
-    Type     int    `json:"type,omitempty"`     // 点击事件: 0无, 1url, 2小程序
-    URL      string `json:"url,omitempty"`      // 跳转url
-    AppID    string `json:"appid,omitempty"`    // 小程序appid
-    PagePath string `json:"pagepath,omitempty"` // 小程序pagepath
-    Title    string `json:"title,omitempty"`    // 标题
-    Desc     string `json:"desc,omitempty"`     // 描述
-    ImageURL string `json:"image_url"`          // 图片url
-}
-```
-
-<a name="JumpAction"></a>
-## type JumpAction
-
-JumpAction 跳转指引样式的列表
-
-```go
-type JumpAction struct {
-    Type     int    `json:"type,omitempty"`     // 跳转类型: 0无, 1url, 2小程序, 3触发消息智能回复
-    Question string `json:"question,omitempty"` // 智能问答问题 (type=3)
-    Title    string `json:"title"`              // 文案内容
-    URL      string `json:"url,omitempty"`      // 跳转url
-    AppID    string `json:"appid,omitempty"`    // 小程序appid
-    PagePath string `json:"pagepath,omitempty"` // 小程序pagepath
-}
-```
-
-<a name="MainTitle"></a>
-## type MainTitle
-
-MainTitle 模版卡片的主要内容
-
-```go
-type MainTitle struct {
-    Title string `json:"title,omitempty"` // 一级标题
-    Desc  string `json:"desc,omitempty"`  // 标题辅助信息
-}
+type EncryptedResponse = wecomproto.EncryptedResponse
 ```
 
 <a name="MarkdownMessage"></a>
 ## type MarkdownMessage
 
-MarkdownMessage 主动回复 Markdown 消息结构。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type MarkdownMessage struct {
-    MsgType  string          `json:"msgtype"` // markdown
-    Markdown MarkdownPayload `json:"markdown"`
-}
+type MarkdownMessage = wecomproto.MarkdownMessage
 ```
 
 <a name="MarkdownPayload"></a>
 ## type MarkdownPayload
 
-MarkdownPayload 表示 Markdown 消息体内容。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type MarkdownPayload struct {
-    Content  string        `json:"content"`            // Markdown 文本内容
-    Feedback *FeedbackInfo `json:"feedback,omitempty"` // 可选反馈信息
-}
+type MarkdownPayload = wecomproto.MarkdownPayload
 ```
 
 <a name="Message"></a>
 ## type Message
 
-Message 表示企业微信回调的通用消息结构。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type Message struct {
-    MsgID       string             `json:"msgid"`                 // 企业微信消息唯一标识
-    CreateTime  int64              `json:"create_time,omitempty"` // 消息创建时间
-    AIBotID     string             `json:"aibotid"`               // 机器人 ID
-    ChatID      string             `json:"chatid"`                // 群或私聊会话 ID
-    ChatType    string             `json:"chattype"`              // chat 类型（single/group）
-    From        MessageSender      `json:"from"`                  // 触发者信息
-    ResponseURL string             `json:"response_url"`          // 异步回复 URL (部分事件有)
-    MsgType     string             `json:"msgtype"`               // 消息类型: text, image, voice, file, mixed, stream, event
-    Text        *TextPayload       `json:"text,omitempty"`        // 文本消息内容（MsgType=text）
-    Image       *ImagePayload      `json:"image,omitempty"`       // 图片消息内容（MsgType=image）
-    Voice       *VoicePayload      `json:"voice,omitempty"`       // 语音消息内容（MsgType=voice）
-    File        *FilePayload       `json:"file,omitempty"`        // 文件消息内容（MsgType=file）
-    Mixed       *MixedPayload      `json:"mixed,omitempty"`       // 图文混排内容（MsgType=mixed）
-    Stream      *StreamPayload     `json:"stream,omitempty"`      // 流式消息内容（MsgType=stream）
-    Quote       *QuotePayload      `json:"quote,omitempty"`       // 引用消息内容（MsgType=quote）
-    Event       *EventPayload      `json:"event,omitempty"`       // 事件消息内容（MsgType=event）
-    Attachment  *AttachmentPayload `json:"attachment,omitempty"`  // 某些事件可能带附件
-}
+type Message = wecomproto.Message
 ```
 
 <a name="MessageSender"></a>
 ## type MessageSender
 
-MessageSender 描述消息的触发者。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type MessageSender struct {
-    UserID string `json:"userid"`           // 用户 ID
-    CorpID string `json:"corpid,omitempty"` // 企业 ID (事件中可能返回)
+type MessageSender = wecomproto.MessageSender
+```
+
+<a name="PipelineAdapter"></a>
+## type PipelineAdapter
+
+PipelineAdapter 将 botcore.PipelineInvoker 适配为 wecomproto.Handler。
+
+```go
+type PipelineAdapter struct {
+    // contains filtered or unexported fields
 }
 ```
 
-<a name="MixedItem"></a>
-## type MixedItem
-
-MixedItem 为图文混排中的单个子消息。
+<a name="NewPipelineAdapter"></a>
+### func NewPipelineAdapter
 
 ```go
-type MixedItem struct {
-    MsgType string        `json:"msgtype"`         // 子消息类型
-    Text    *TextPayload  `json:"text,omitempty"`  // 文本子消息
-    Image   *ImagePayload `json:"image,omitempty"` // 图片子消息
-}
+func NewPipelineAdapter(pipeline botcore.PipelineInvoker) *PipelineAdapter
 ```
 
-<a name="MixedPayload"></a>
-## type MixedPayload
+NewPipelineAdapter 创建适配器。
 
-MixedPayload 表示图文混排消息。
+<a name="PipelineAdapter.Handle"></a>
+### func \(\*PipelineAdapter\) Handle
 
 ```go
-type MixedPayload struct {
-    Items []MixedItem `json:"msg_item"` // 图文混排子消息列表
-}
+func (a *PipelineAdapter) Handle(ctx wecomproto.Context) <-chan wecomproto.Chunk
 ```
 
-<a name="OptionIDs"></a>
-## type OptionIDs
-
-OptionIDs 选项ID列表
-
-```go
-type OptionIDs struct {
-    OptionID []string `json:"option_id"` // 选项 ID 列表
-}
-```
-
-<a name="QuoteArea"></a>
-## type QuoteArea
-
-QuoteArea 引用文献样式
-
-```go
-type QuoteArea struct {
-    Type      int    `json:"type,omitempty"`       // 点击事件: 0无, 1跳转url, 2跳转小程序
-    URL       string `json:"url,omitempty"`        // 跳转url
-    AppID     string `json:"appid,omitempty"`      // 小程序appid
-    PagePath  string `json:"pagepath,omitempty"`   // 小程序pagepath
-    Title     string `json:"title,omitempty"`      // 标题
-    QuoteText string `json:"quote_text,omitempty"` // 引用文案
-}
-```
-
-<a name="QuotePayload"></a>
-## type QuotePayload
-
-QuotePayload 引用消息内容。
-
-```go
-type QuotePayload struct {
-    MsgType string        `json:"msgtype"`         // 引用消息类型
-    Text    *TextPayload  `json:"text,omitempty"`  // 引用文本
-    Image   *ImagePayload `json:"image,omitempty"` // 引用图片
-    Mixed   *MixedPayload `json:"mixed,omitempty"` // 引用图文混排
-    Voice   *VoicePayload `json:"voice,omitempty"` // 引用语音
-    File    *FilePayload  `json:"file,omitempty"`  // 引用文件
-}
-```
-
-<a name="SelectOption"></a>
-## type SelectOption
-
-SelectOption 选择器选项
-
-```go
-type SelectOption struct {
-    ID   string `json:"id"`   // 选项id
-    Text string `json:"text"` // 选项文案
-}
-```
-
-<a name="SelectedItem"></a>
-## type SelectedItem
-
-SelectedItem 单个选择项结果
-
-```go
-type SelectedItem struct {
-    QuestionKey string     `json:"question_key"`         // 题目 key
-    OptionIDs   *OptionIDs `json:"option_ids,omitempty"` // 选中的选项
-}
-```
-
-<a name="SelectedItems"></a>
-## type SelectedItems
-
-SelectedItems 模板卡片选择结果容器
-
-```go
-type SelectedItems struct {
-    SelectedItem []SelectedItem `json:"selected_item"` // 选择结果列表
-}
-```
-
-<a name="SelectionItem"></a>
-## type SelectionItem
-
-SelectionItem 下拉式的选择器
-
-```go
-type SelectionItem struct {
-    QuestionKey string         `json:"question_key"`          // 题目key
-    Title       string         `json:"title,omitempty"`       // 标题
-    Disable     bool           `json:"disable,omitempty"`     // 是否不可选 (更新时有效)
-    SelectedID  string         `json:"selected_id,omitempty"` // 默认选中id
-    OptionList  []SelectOption `json:"option_list"`           // 选项列表
-}
-```
-
-<a name="Source"></a>
-## type Source
-
-Source 卡片来源样式信息
-
-```go
-type Source struct {
-    IconURL   string `json:"icon_url,omitempty"`   // 来源图片的url
-    Desc      string `json:"desc,omitempty"`       // 来源图片的描述
-    DescColor int    `json:"desc_color,omitempty"` // 来源文字的颜色: 0(默认)灰色, 1黑色, 2红色, 3绿色
-}
-```
+Handle 实现 wecomproto.Handler 接口。
 
 <a name="StartOptions"></a>
 ## type StartOptions
 
-StartOptions 控制 Bot 启动 HTTP 服务的参数。 Fields:
-
-- ListenAddr: HTTP 监听地址（当 Server 未提供 Addr 时使用）
-- CallbackPath: 回调路径（为空则默认 /callback/command）
-- Mux: 可选路由复用器（为空则内部创建新的 \*http.ServeMux）
-- Server: 可选 HTTP Server（为空则内部创建并使用 ListenAddr）
+StartOptions 直接使用 wecomproto 的启动选项。
 
 ```go
-type StartOptions struct {
-    ListenAddr   string
-    CallbackPath string
-    Mux          *http.ServeMux
-    Server       *http.Server
-}
-```
-
-<a name="Stream"></a>
-## type Stream
-
-Stream 表示一次流式会话的上下文。
-
-```go
-type Stream struct {
-    RequestSnapshot botcore.RequestSnapshot // 标准化事件上下文
-
-    StreamID    string    // 流式会话唯一标识
-    MsgID       string    // 对应企业微信消息 ID
-    ChatID      string    // 会话所属聊天 ID
-    UserID      string    // 发起用户 ID
-    ResponseURL string    // 主动回复 URL（部分事件返回）
-    CreatedAt   time.Time // 创建时间
-    LastAccess  time.Time // 最近访问时间
-
-    Finished bool // 会话是否已完成
-
-    LastChunk *botcore.StreamChunk // 最近一次发送的片段，用于超时兜底
-    // contains filtered or unexported fields
-}
-```
-
-<a name="StreamManager"></a>
-## type StreamManager
-
-StreamManager 管理流式会话的生命周期。
-
-```go
-type StreamManager struct {
-    // contains filtered or unexported fields
-}
+type StartOptions = wecomproto.StartOptions
 ```
 
 <a name="StreamPayload"></a>
 ## type StreamPayload
 
-StreamPayload 表达流式消息的会话信息。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type StreamPayload struct {
-    ID      string      `json:"id"`                 // 流式会话 ID
-    Finish  bool        `json:"finish,omitempty"`   // 是否结束
-    Content string      `json:"content,omitempty"`  // 当前累计内容
-    MsgItem []MixedItem `json:"msg_item,omitempty"` // 流式结束时支持图文
-}
-```
-
-<a name="StreamReply"></a>
-## type StreamReply
-
-StreamReply 用于构造流式消息回复的明文结构。
-
-```go
-type StreamReply struct {
-    MsgType string          `json:"msgtype"` // 固定为 stream
-    Stream  StreamReplyBody `json:"stream"`  // 流式消息体
-}
-```
-
-<a name="StreamReplyBody"></a>
-## type StreamReplyBody
-
-StreamReplyBody 为流式回复中的具体内容。
-
-```go
-type StreamReplyBody struct {
-    ID       string        `json:"id"`                 // 流式会话 ID
-    Finish   bool          `json:"finish"`             // 是否结束
-    Content  string        `json:"content"`            // 累计内容
-    MsgItem  []MixedItem   `json:"msg_item,omitempty"` // 结束时可携带图文
-    Feedback *FeedbackInfo `json:"feedback,omitempty"` // 反馈信息（流式回复可选）
-}
-```
-
-<a name="StreamWithTemplateCardMessage"></a>
-## type StreamWithTemplateCardMessage
-
-StreamWithTemplateCardMessage 被动回复流式\+模版卡片
-
-```go
-type StreamWithTemplateCardMessage struct {
-    MsgType      string          `json:"msgtype"`       // 固定为 stream
-    Stream       StreamReplyBody `json:"stream"`        // 流式消息体
-    TemplateCard *TemplateCard   `json:"template_card"` // 模板卡片体
-}
-```
-
-<a name="SubmitButton"></a>
-## type SubmitButton
-
-SubmitButton 提交按钮样式
-
-```go
-type SubmitButton struct {
-    Text string `json:"text"` // 按钮文案
-    Key  string `json:"key"`  // 按钮key
-}
+type StreamPayload = wecomproto.StreamPayload
 ```
 
 <a name="TemplateCard"></a>
 ## type TemplateCard
 
-TemplateCard 模版卡片结构体，涵盖多种卡片类型。 对应文档：5\_模版卡片类型.md
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type TemplateCard struct {
-    CardType              string              `json:"card_type"`                         // 模版类型: text_notice, news_notice, button_interaction, vote_interaction, multiple_interaction
-    Source                *Source             `json:"source,omitempty"`                  // 卡片来源样式信息
-    ActionMenu            *ActionMenu         `json:"action_menu,omitempty"`             // 卡片右上角更多操作按钮
-    MainTitle             *MainTitle          `json:"main_title,omitempty"`              // 一级标题
-    EmphasisContent       *EmphasisContent    `json:"emphasis_content,omitempty"`        // 关键数据样式
-    QuoteArea             *QuoteArea          `json:"quote_area,omitempty"`              // 引用文献样式
-    SubTitleText          string              `json:"sub_title_text,omitempty"`          // 二级普通文本
-    VerticalContentList   []VerticalContent   `json:"vertical_content_list,omitempty"`   // 二级垂直内容列表
-    HorizontalContentList []HorizontalContent `json:"horizontal_content_list,omitempty"` // 二级标题+文本列表
-    JumpList              []JumpAction        `json:"jump_list,omitempty"`               // 跳转指引样式列表
-    CardAction            *CardAction         `json:"card_action,omitempty"`             // 整体卡片点击跳转
-    TaskID                string              `json:"task_id,omitempty"`                 // 任务id
-    CardImage             *CardImage          `json:"card_image,omitempty"`              // 图片样式 (news_notice)
-    ImageTextArea         *ImageTextArea      `json:"image_text_area,omitempty"`         // 左图右文样式 (news_notice)
-    ButtonSelection       *SelectionItem      `json:"button_selection,omitempty"`        // 下拉式选择器 (button_interaction)
-    ButtonList            []Button            `json:"button_list,omitempty"`             // 按钮列表 (button_interaction)
-    Checkbox              *Checkbox           `json:"checkbox,omitempty"`                // 选择题样式 (vote_interaction)
-    SubmitButton          *SubmitButton       `json:"submit_button,omitempty"`           // 提交按钮 (vote_interaction, multiple_interaction)
-    SelectList            []SelectionItem     `json:"select_list,omitempty"`             // 下拉式选择器列表 (multiple_interaction)
-    Feedback              *FeedbackInfo       `json:"feedback,omitempty"`                // 反馈信息 (主动回复时使用)
-}
-```
-
-<a name="TemplateCardEvent"></a>
-## type TemplateCardEvent
-
-TemplateCardEvent 模板卡片事件
-
-```go
-type TemplateCardEvent struct {
-    CardType      string         `json:"card_type"`                // 模版类型
-    EventKey      string         `json:"event_key"`                // 按钮Key
-    TaskID        string         `json:"task_id"`                  // 任务ID
-    SelectedItems *SelectedItems `json:"selected_items,omitempty"` // 选择结果
-}
+type TemplateCard = wecomproto.TemplateCard
 ```
 
 <a name="TemplateCardMessage"></a>
 ## type TemplateCardMessage
 
-TemplateCardMessage 被动回复模版卡片消息
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type TemplateCardMessage struct {
-    MsgType      string        `json:"msgtype"`       // 固定为 template_card
-    TemplateCard *TemplateCard `json:"template_card"` // 模板卡片体
-}
-```
-
-<a name="TextMessage"></a>
-## type TextMessage
-
-TextMessage 被动回复文本消息
-
-```go
-type TextMessage struct {
-    MsgType string       `json:"msgtype"` // 固定为 text
-    Text    *TextPayload `json:"text"`    // 文本内容
-}
+type TemplateCardMessage = wecomproto.TemplateCardMessage
 ```
 
 <a name="TextPayload"></a>
 ## type TextPayload
 
-TextPayload 为文本消息内容。
+以下类型别名方便外部使用，避免直接导入 wecomproto
 
 ```go
-type TextPayload struct {
-    Content string `json:"content"` // 文本内容
-}
-```
-
-<a name="UpdateTemplateCardMessage"></a>
-## type UpdateTemplateCardMessage
-
-UpdateTemplateCardMessage 更新模版卡片消息
-
-```go
-type UpdateTemplateCardMessage struct {
-    ResponseType string        `json:"response_type"`     // 固定为 update_template_card
-    UserIDs      []string      `json:"userids,omitempty"` // 指定接收用户
-    TemplateCard *TemplateCard `json:"template_card"`     // 模板卡片体
-}
-```
-
-<a name="VerticalContent"></a>
-## type VerticalContent
-
-VerticalContent 卡片二级垂直内容
-
-```go
-type VerticalContent struct {
-    Title string `json:"title"`          // 二级标题
-    Desc  string `json:"desc,omitempty"` // 二级普通文本
-}
-```
-
-<a name="VoicePayload"></a>
-## type VoicePayload
-
-VoicePayload 为语音消息内容。
-
-```go
-type VoicePayload struct {
-    Content string `json:"content"` // 语音转文本内容
-}
+type TextPayload = wecomproto.TextPayload
 ```
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)
