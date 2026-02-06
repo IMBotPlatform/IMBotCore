@@ -3,7 +3,7 @@ module github.com/IMBotPlatform/IMBotCore
 go 1.24.4
 
 require (
-	github.com/IMBotPlatform/bot-protocol-wecom v0.0.1
+	github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260206100111-245bcfd8343b
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
@@ -46,3 +46,5 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
+
+replace github.com/IMBotPlatform/bot-protocol-wecom => ../bot-protocol-wecom

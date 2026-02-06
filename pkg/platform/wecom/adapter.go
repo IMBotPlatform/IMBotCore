@@ -117,21 +117,21 @@ func buildSnapshot(msg *wecomproto.Message, streamID string) botcore.RequestSnap
 	}
 
 	attachments := make([]botcore.Attachment, 0)
-	addAttachment := func(attType botcore.AttachmentType, url string) {
-		if url == "" {
+	addAttachment := func(attType botcore.AttachmentType, url string, data []byte) {
+		if url == "" && len(data) == 0 {
 			return
 		}
-		attachments = append(attachments, botcore.Attachment{Type: attType, URL: url})
+		attachments = append(attachments, botcore.Attachment{Type: attType, URL: url, Data: data})
 	}
 
 	switch msg.MsgType {
 	case "image":
 		if msg.Image != nil {
-			addAttachment(botcore.AttachmentTypeImage, msg.Image.URL)
+			addAttachment(botcore.AttachmentTypeImage, msg.Image.URL, msg.Image.Data)
 		}
 	case "file":
 		if msg.File != nil {
-			addAttachment(botcore.AttachmentTypeFile, msg.File.URL)
+			addAttachment(botcore.AttachmentTypeFile, msg.File.URL, nil)
 		}
 	case "mixed":
 		if msg.Mixed != nil {
@@ -140,7 +140,7 @@ func buildSnapshot(msg *wecomproto.Message, streamID string) botcore.RequestSnap
 				switch item.MsgType {
 				case "image":
 					if item.Image != nil {
-						addAttachment(botcore.AttachmentTypeImage, item.Image.URL)
+						addAttachment(botcore.AttachmentTypeImage, item.Image.URL, item.Image.Data)
 					}
 				case "text":
 					if item.Text != nil && item.Text.Content != "" {

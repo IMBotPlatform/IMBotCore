@@ -50,7 +50,11 @@ const (
 // Attachment 描述平台无关的附件信息。
 type Attachment struct {
 	Type AttachmentType // 附件类型: image/file
-	URL  string         // 可下载的资源地址
+	URL  string         // 可下载的资源地址（当 Data 为空时使用）
+	// Data 存储已解密/已下载的原始字节数据。
+	// 当此字段非空时，SaveAttachments 将直接使用此数据而不是下载 URL。
+	// 由平台协议层（如 wecom）自动填充已解密的附件数据。
+	Data []byte
 }
 
 // SavedAttachment 表示附件保存结果。
@@ -89,8 +93,9 @@ func (r RequestSnapshot) SaveAttachments(dir string) ([]SavedAttachment, error) 
 	for i, att := range r.Attachments {
 		result := SavedAttachment{Attachment: att}
 
-		if strings.TrimSpace(att.URL) == "" {
-			result.Err = errors.New("attachment url is empty")
+		// 关键步骤：优先使用 Data 字段（协议层已解密的数据），仅当 Data 为空时才下载 URL。
+		if len(att.Data) == 0 && strings.TrimSpace(att.URL) == "" {
+			result.Err = errors.New("attachment has no data and no url")
 			results = append(results, result)
 			hasError = true
 			continue
@@ -105,12 +110,23 @@ func (r RequestSnapshot) SaveAttachments(dir string) ([]SavedAttachment, error) 
 			continue
 		}
 
-		// 关键步骤：下载并落盘。
-		if err := downloadAttachment(client, att.URL, targetPath); err != nil {
-			result.Err = err
-			results = append(results, result)
-			hasError = true
-			continue
+		// 关键步骤：优先使用已解密的 Data，若无则下载 URL。
+		if len(att.Data) > 0 {
+			// 直接写入已解密数据
+			if err := os.WriteFile(targetPath, att.Data, 0o644); err != nil {
+				result.Err = fmt.Errorf("write data: %w", err)
+				results = append(results, result)
+				hasError = true
+				continue
+			}
+		} else {
+			// 下载并落盘
+			if err := downloadAttachment(client, att.URL, targetPath); err != nil {
+				result.Err = err
+				results = append(results, result)
+				hasError = true
+				continue
+			}
 		}
 
 		result.Path = targetPath
