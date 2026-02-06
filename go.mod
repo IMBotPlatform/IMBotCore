@@ -3,6 +3,7 @@ module github.com/IMBotPlatform/IMBotCore
 go 1.24.4
 
 require (
+	github.com/IMBotPlatform/bot-protocol-wecom v0.0.0
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
@@ -10,6 +11,8 @@ require (
 	github.com/tmc/langchaingo v0.1.13
 	modernc.org/sqlite v1.44.3
 )
+
+replace github.com/IMBotPlatform/bot-protocol-wecom => ../bot-protocol-wecom
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
