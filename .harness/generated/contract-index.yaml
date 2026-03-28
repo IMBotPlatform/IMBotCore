@@ -1,0 +1,42 @@
+public_routes:
+  - package: pkg/botcore
+  - package: pkg/command
+  - package: pkg/platform/wecom
+  - package: pkg/scheduler
+  - package: pkg/workspace
+  - package: pkg/callback
+  - package: pkg/container
+
+events:
+  - StreamChunk
+  - RequestSnapshot
+  - Task
+  - ApprovalRequest
+  - ApprovalResponse
+
+schemas:
+  - RequestSnapshot
+  - StreamChunk
+  - ExecutionContext
+  - Task
+  - WorkspaceInfo
+  - RunRequest
+  - RunResult
+
+sdk_facades:
+  - command.Manager
+  - scheduler.Scheduler
+  - workspace.Workspace
+  - callback.FSCallback
+  - platform/wecom.Bot
+
+generated_mirrors:
+  - docs/reference/index.md
+  - docs/reference/botcore.md
+  - docs/reference/command.md
+  - docs/reference/platform-wecom.md
+  - docs/reference/scheduler.md
+  - docs/reference/workspace.md
+
+downstream_consumers:
+  - wechataibot

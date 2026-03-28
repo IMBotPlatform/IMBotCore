@@ -1,0 +1,34 @@
+repo_id: IMBotCore
+role: platform-agnostic bot core
+owns:
+  - snapshot and stream abstractions
+  - command execution bridge
+  - scheduler
+  - chat workspace filesystem
+  - file-based callback IPC
+  - WeCom adapter over bot-protocol-wecom
+not_owns:
+  - product-specific skills
+  - GitLab deployment flow
+  - Claude CLI runtime implementation
+entrypoints:
+  - pkg/botcore
+  - pkg/command
+  - pkg/platform/wecom
+  - pkg/scheduler
+  - pkg/workspace
+depends_on:
+  - github.com/IMBotPlatform/bot-protocol-wecom
+  - github.com/spf13/cobra
+  - github.com/robfig/cron/v3
+  - modernc.org/sqlite
+high_risk_areas:
+  - pkg/command
+  - pkg/platform/wecom
+  - pkg/scheduler
+  - pkg/workspace
+read_first:
+  - README.md
+  - docs/architecture/overview.md
+  - .harness/generated/api-index.md
+base_branch: main

@@ -1,0 +1,23 @@
+validate_commands:
+  - go test ./...
+  - scripts/generate-docs.sh --check
+
+change_type_to_checks:
+  public_api:
+    - go test ./...
+    - scripts/generate-docs.sh --check
+  wecom_adapter:
+    - go test ./...
+  scheduler:
+    - go test ./...
+  workspace:
+    - go test ./...
+  docs_reference:
+    - scripts/generate-docs.sh --check
+
+ci_jobs:
+  - name: generate-reference
+    file: .github/workflows/docs.yml
+
+release_checks:
+  - verify downstream wechataibot compatibility if public packages changed

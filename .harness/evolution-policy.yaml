@@ -1,0 +1,33 @@
+repo_id: IMBotCore
+signals:
+  structure:
+    targets:
+      - .harness/generated/module-map.md
+      - .harness/generated/repo-manifest.yaml
+  runtime:
+    targets:
+      - .harness/domains/runtime-services.md
+      - .harness/generated/dependency-summary.md
+  contract:
+    targets:
+      - .harness/generated/api-index.md
+      - .harness/generated/contract-index.yaml
+      - .harness/runbooks/docs-sync.md
+  boundary:
+    targets:
+      - AGENTS.md
+      - .harness/conventions.md
+      - .harness/domains/core-abstractions.md
+  incident:
+    targets:
+      - .harness/runbooks/local-validation.md
+
+workspace_escalation:
+  - changed dependency on bot-protocol-wecom
+  - changed package owner boundary relevant to wechataibot
+  - changed base branch or doc-generation delivery mechanism
+
+update_policy:
+  class_a: direct
+  class_b: incremental
+  class_c: candidate_only
