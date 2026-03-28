@@ -59,7 +59,7 @@ var DefaultBlockedPatterns = []string{
 ```
 
 <a name="SanitizePath"></a>
-## func [SanitizePath](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/security.go#L107>)
+## func SanitizePath
 
 ```go
 func SanitizePath(s string) string
@@ -68,7 +68,7 @@ func SanitizePath(s string) string
 SanitizePath 清理路径中的特殊字符。
 
 <a name="WriteEnvFile"></a>
-## func [WriteEnvFile](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L359>)
+## func WriteEnvFile
 
 ```go
 func WriteEnvFile(dir string, envVars map[string]string, allowedVars []string) (string, error)
@@ -77,7 +77,7 @@ func WriteEnvFile(dir string, envVars map[string]string, allowedVars []string) (
 WriteEnvFile 将环境变量写入文件（用于容器内读取）。
 
 <a name="Config"></a>
-## type [Config](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/runner.go#L53-L62>)
+## type Config
 
 Config 容器执行器配置。
 
@@ -95,7 +95,7 @@ type Config struct {
 ```
 
 <a name="DefaultConfig"></a>
-### func [DefaultConfig](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/runner.go#L65>)
+### func DefaultConfig
 
 ```go
 func DefaultConfig() Config
@@ -104,7 +104,7 @@ func DefaultConfig() Config
 DefaultConfig 返回默认配置。
 
 <a name="DockerRunner"></a>
-## type [DockerRunner](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L27-L32>)
+## type DockerRunner
 
 DockerRunner Docker 容器执行器实现。
 
@@ -115,7 +115,7 @@ type DockerRunner struct {
 ```
 
 <a name="NewDockerRunner"></a>
-### func [NewDockerRunner](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L35>)
+### func NewDockerRunner
 
 ```go
 func NewDockerRunner(cfg Config) (*DockerRunner, error)
@@ -124,7 +124,7 @@ func NewDockerRunner(cfg Config) (*DockerRunner, error)
 NewDockerRunner 创建 Docker 执行器。
 
 <a name="DockerRunner.Cleanup"></a>
-### func \(\*DockerRunner\) [Cleanup](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L340>)
+### func \(\*DockerRunner\) Cleanup
 
 ```go
 func (r *DockerRunner) Cleanup(ctx context.Context) error
@@ -133,7 +133,7 @@ func (r *DockerRunner) Cleanup(ctx context.Context) error
 Cleanup 清理过期资源。
 
 <a name="DockerRunner.Close"></a>
-### func \(\*DockerRunner\) [Close](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L346>)
+### func \(\*DockerRunner\) Close
 
 ```go
 func (r *DockerRunner) Close() error
@@ -142,7 +142,7 @@ func (r *DockerRunner) Close() error
 Close 关闭执行器。
 
 <a name="DockerRunner.Run"></a>
-### func \(\*DockerRunner\) [Run](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L58>)
+### func \(\*DockerRunner\) Run
 
 ```go
 func (r *DockerRunner) Run(ctx context.Context, req RunRequest) (*RunResult, error)
@@ -151,7 +151,7 @@ func (r *DockerRunner) Run(ctx context.Context, req RunRequest) (*RunResult, err
 Run 在容器中执行 prompt。
 
 <a name="DockerRunner.Stop"></a>
-### func \(\*DockerRunner\) [Stop](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/docker.go#L333>)
+### func \(\*DockerRunner\) Stop
 
 ```go
 func (r *DockerRunner) Stop(containerID string) error
@@ -160,7 +160,7 @@ func (r *DockerRunner) Stop(containerID string) error
 Stop 停止指定容器。
 
 <a name="MountValidator"></a>
-## type [MountValidator](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/security.go#L31-L33>)
+## type MountValidator
 
 MountValidator 挂载验证器。
 
@@ -171,7 +171,7 @@ type MountValidator struct {
 ```
 
 <a name="NewMountValidator"></a>
-### func [NewMountValidator](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/security.go#L36>)
+### func NewMountValidator
 
 ```go
 func NewMountValidator(additionalBlocked []string) *MountValidator
@@ -180,7 +180,7 @@ func NewMountValidator(additionalBlocked []string) *MountValidator
 NewMountValidator 创建挂载验证器。
 
 <a name="MountValidator.Validate"></a>
-### func \(\*MountValidator\) [Validate](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/security.go#L51>)
+### func \(\*MountValidator\) Validate
 
 ```go
 func (v *MountValidator) Validate(hostPath string) ValidateResult
@@ -189,7 +189,7 @@ func (v *MountValidator) Validate(hostPath string) ValidateResult
 Validate 验证挂载路径。
 
 <a name="MountValidator.ValidateMounts"></a>
-### func \(\*MountValidator\) [ValidateMounts](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/security.go#L90>)
+### func \(\*MountValidator\) ValidateMounts
 
 ```go
 func (v *MountValidator) ValidateMounts(mounts []VolumeMount) (allowed []VolumeMount, rejected []VolumeMount)
@@ -198,7 +198,7 @@ func (v *MountValidator) ValidateMounts(mounts []VolumeMount) (allowed []VolumeM
 ValidateMounts 批量验证挂载路径。 返回验证通过的挂载列表和被拒绝的列表。
 
 <a name="RunRequest"></a>
-## type [RunRequest](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/runner.go#L11-L24>)
+## type RunRequest
 
 RunRequest 容器执行请求。
 
@@ -220,7 +220,7 @@ type RunRequest struct {
 ```
 
 <a name="RunResult"></a>
-## type [RunResult](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/runner.go#L27-L34>)
+## type RunResult
 
 RunResult 容器执行结果。
 
@@ -236,7 +236,7 @@ type RunResult struct {
 ```
 
 <a name="Runner"></a>
-## type [Runner](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/runner.go#L37-L50>)
+## type Runner
 
 Runner 容器执行器接口。
 
@@ -258,7 +258,7 @@ type Runner interface {
 ```
 
 <a name="ValidateResult"></a>
-## type [ValidateResult](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/security.go#L44-L48>)
+## type ValidateResult
 
 ValidateResult 验证结果。
 
@@ -271,7 +271,7 @@ type ValidateResult struct {
 ```
 
 <a name="VolumeMount"></a>
-## type [VolumeMount](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/container/runner.go#L81-L85>)
+## type VolumeMount
 
 VolumeMount 卷挂载配置。
 

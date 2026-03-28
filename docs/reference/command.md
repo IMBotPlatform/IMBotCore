@@ -47,7 +47,7 @@ var (
 ```
 
 <a name="WithExecutionContext"></a>
-## func [WithExecutionContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L124>)
+## func WithExecutionContext
 
 ```go
 func WithExecutionContext(ctx context.Context, execCtx *ExecutionContext) context.Context
@@ -56,7 +56,7 @@ func WithExecutionContext(ctx context.Context, execCtx *ExecutionContext) contex
 WithExecutionContext 将 ExecutionContext 注入到标准 context.Context 中。
 
 <a name="CommandFunc"></a>
-## type [CommandFunc](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/command.go#L7>)
+## type CommandFunc
 
 CommandFunc 定义创建 Cobra 命令树的工厂函数类型。 在 HTTP 服务中，每个请求必须拥有独立的命令对象实例，以避免 Flag 解析的并发冲突。
 
@@ -65,7 +65,7 @@ type CommandFunc func() *cobra.Command
 ```
 
 <a name="ExecutionContext"></a>
-## type [ExecutionContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L24-L33>)
+## type ExecutionContext
 
 ExecutionContext 为命令 handler 提供必要的环境信息。
 
@@ -77,7 +77,7 @@ type ExecutionContext struct {
 ```
 
 <a name="FromContext"></a>
-### func [FromContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L129>)
+### func FromContext
 
 ```go
 func FromContext(ctx context.Context) *ExecutionContext
@@ -86,7 +86,7 @@ func FromContext(ctx context.Context) *ExecutionContext
 FromContext 从标准 context.Context 中提取 ExecutionContext。
 
 <a name="ExecutionContext.Response"></a>
-### func \(\*ExecutionContext\) [Response](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L41>)
+### func \(\*ExecutionContext\) Response
 
 ```go
 func (ctx *ExecutionContext) Response(msg any) error
@@ -101,7 +101,7 @@ Returns:
 - error: 发送失败时返回
 
 <a name="ExecutionContext.ResponseMarkdown"></a>
-### func \(\*ExecutionContext\) [ResponseMarkdown](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L58>)
+### func \(\*ExecutionContext\) ResponseMarkdown
 
 ```go
 func (ctx *ExecutionContext) ResponseMarkdown(content string) error
@@ -116,7 +116,7 @@ Returns:
 - error: 发送失败时返回
 
 <a name="ExecutionContext.ResponseTemplateCard"></a>
-### func \(\*ExecutionContext\) [ResponseTemplateCard](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L75>)
+### func \(\*ExecutionContext\) ResponseTemplateCard
 
 ```go
 func (ctx *ExecutionContext) ResponseTemplateCard(card any) error
@@ -131,7 +131,7 @@ Returns:
 - error: 发送失败时返回
 
 <a name="ExecutionContext.SendNoResponse"></a>
-### func \(\*ExecutionContext\) [SendNoResponse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L95>)
+### func \(\*ExecutionContext\) SendNoResponse
 
 ```go
 func (ctx *ExecutionContext) SendNoResponse()
@@ -140,7 +140,7 @@ func (ctx *ExecutionContext) SendNoResponse()
 SendNoResponse 立即发送静默信号。 Bot 层收到此信号后将直接返回 HTTP 200 OK 空包。
 
 <a name="ExecutionContext.SendPayload"></a>
-### func \(\*ExecutionContext\) [SendPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/context.go#L87>)
+### func \(\*ExecutionContext\) SendPayload
 
 ```go
 func (ctx *ExecutionContext) SendPayload(payload any)
@@ -149,7 +149,7 @@ func (ctx *ExecutionContext) SendPayload(payload any)
 SendPayload 立即发送非流式响应对象。
 
 <a name="Manager"></a>
-## type [Manager](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L13-L19>)
+## type Manager
 
 Manager 实现 PipelineInvoker，负责串联解析、构建 Cobra 命令树并执行。
 
@@ -160,7 +160,7 @@ type Manager struct {
 ```
 
 <a name="NewManager"></a>
-### func [NewManager](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L39>)
+### func NewManager
 
 ```go
 func NewManager(factory CommandFunc, opts ...ManagerOption) *Manager
@@ -169,7 +169,7 @@ func NewManager(factory CommandFunc, opts ...ManagerOption) *Manager
 NewManager 绑定命令构建函数，返回实现 PipelineInvoker 的管理器。
 
 <a name="Manager.Trigger"></a>
-### func \(\*Manager\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L51>)
+### func \(\*Manager\) Trigger
 
 ```go
 func (m *Manager) Trigger(pipelineCtx botcore.PipelineContext) <-chan botcore.StreamChunk
@@ -178,7 +178,7 @@ func (m *Manager) Trigger(pipelineCtx botcore.PipelineContext) <-chan botcore.St
 Trigger 满足 botcore.PipelineInvoker，为每个请求构建独立的命令树并执行。
 
 <a name="ManagerOption"></a>
-## type [ManagerOption](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L22>)
+## type ManagerOption
 
 ManagerOption 自定义 Manager 行为。
 
@@ -187,7 +187,7 @@ type ManagerOption func(*Manager)
 ```
 
 <a name="WithLogger"></a>
-### func [WithLogger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L25>)
+### func WithLogger
 
 ```go
 func WithLogger(l *log.Logger) ManagerOption
@@ -196,7 +196,7 @@ func WithLogger(l *log.Logger) ManagerOption
 WithLogger 注入自定义日志记录器。
 
 <a name="WithResponser"></a>
-### func [WithResponser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/manager.go#L32>)
+### func WithResponser
 
 ```go
 func WithResponser(r botcore.Responser) ManagerOption
@@ -205,7 +205,7 @@ func WithResponser(r botcore.Responser) ManagerOption
 WithResponser 注入主动消息发送器（当 PipelineContext.Responser 为空时作为兜底）。
 
 <a name="ParseResult"></a>
-## type [ParseResult](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L8-L13>)
+## type ParseResult
 
 ParseResult 承载文本命令解析后的结构化结果。
 
@@ -219,7 +219,7 @@ type ParseResult struct {
 ```
 
 <a name="Parser"></a>
-## type [Parser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L16-L18>)
+## type Parser
 
 Parser 解析企业微信文本内容，判定是否命令并拆分 token。
 
@@ -230,7 +230,7 @@ type Parser struct {
 ```
 
 <a name="NewParser"></a>
-### func [NewParser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L21>)
+### func NewParser
 
 ```go
 func NewParser() Parser
@@ -239,7 +239,7 @@ func NewParser() Parser
 NewParser 创建带默认前缀的解析器。
 
 <a name="Parser.Parse"></a>
-### func \(Parser\) [Parse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/parser.go#L26>)
+### func \(Parser\) Parse
 
 ```go
 func (p Parser) Parse(text string) ParseResult
@@ -248,7 +248,7 @@ func (p Parser) Parse(text string) ParseResult
 Parse 将文本拆解为命令 token。规则参考 Telegram Message.IsCommand。
 
 <a name="StreamWriter"></a>
-## type [StreamWriter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/io.go#L9-L11>)
+## type StreamWriter
 
 StreamWriter 实现 io.Writer 接口，将输出重定向到 StreamChunk 通道。 这允许 Cobra 命令像操作 stdout 一样直接打印，而结果会被流式传输给用户。
 
@@ -259,7 +259,7 @@ type StreamWriter struct {
 ```
 
 <a name="NewStreamWriter"></a>
-### func [NewStreamWriter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/io.go#L14>)
+### func NewStreamWriter
 
 ```go
 func NewStreamWriter(ch chan<- botcore.StreamChunk) *StreamWriter
@@ -268,7 +268,7 @@ func NewStreamWriter(ch chan<- botcore.StreamChunk) *StreamWriter
 NewStreamWriter 创建一个新的 StreamWriter。
 
 <a name="StreamWriter.Write"></a>
-### func \(\*StreamWriter\) [Write](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/command/io.go#L19>)
+### func \(\*StreamWriter\) Write
 
 ```go
 func (w *StreamWriter) Write(p []byte) (n int, err error)

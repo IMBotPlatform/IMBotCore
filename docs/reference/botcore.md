@@ -44,7 +44,7 @@ var NoResponse = struct{}{}
 ```
 
 <a name="Attachment"></a>
-## type [Attachment](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L67-L77>)
+## type Attachment
 
 Attachment 描述平台无关的附件信息。
 
@@ -63,7 +63,7 @@ type Attachment struct {
 ```
 
 <a name="AttachmentDownloadTransform"></a>
-## type [AttachmentDownloadTransform](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L64>)
+## type AttachmentDownloadTransform
 
 AttachmentDownloadTransform 在附件下载完成后执行数据变换。 常用于平台协议层注入解密步骤，再由 botcore 统一负责落盘。
 
@@ -72,7 +72,7 @@ type AttachmentDownloadTransform func(downloaded []byte) ([]byte, error)
 ```
 
 <a name="AttachmentType"></a>
-## type [AttachmentType](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L42>)
+## type AttachmentType
 
 AttachmentType 描述附件类型。
 
@@ -94,7 +94,7 @@ const (
 ```
 
 <a name="Bot"></a>
-## type [Bot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/bot.go#L4-L19>)
+## type Bot
 
 Bot 抽象首包快照构建与响应编码能力。
 
@@ -118,7 +118,7 @@ type Bot interface {
 ```
 
 <a name="Chain"></a>
-## type [Chain](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L17-L20>)
+## type Chain
 
 Chain 实现了一个基于责任链/路由表的 PipelineInvoker。 它按顺序检查路由，一旦匹配成功，就移交给对应的 PipelineInvoker，并停止后续匹配。 如果所有路由都不匹配，且设置了 defaultHandler，则调用 defaultHandler。
 
@@ -129,7 +129,7 @@ type Chain struct {
 ```
 
 <a name="NewChain"></a>
-### func [NewChain](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L28>)
+### func NewChain
 
 ```go
 func NewChain(defaultHandler PipelineInvoker) *Chain
@@ -144,7 +144,7 @@ Returns:
 - \*Chain: 初始化后的责任链路由器
 
 <a name="Chain.AddRoute"></a>
-### func \(\*Chain\) [AddRoute](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L40>)
+### func \(\*Chain\) AddRoute
 
 ```go
 func (c *Chain) AddRoute(name string, matcher Matcher, handler PipelineInvoker)
@@ -157,7 +157,7 @@ AddRoute 添加一条路由规则。 Parameters:
 - handler: 命中后执行的 PipelineInvoker
 
 <a name="Chain.Trigger"></a>
-### func \(\*Chain\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L54>)
+### func \(\*Chain\) Trigger
 
 ```go
 func (c *Chain) Trigger(ctx PipelineContext) <-chan StreamChunk
@@ -172,7 +172,7 @@ Returns:
 - \<\-chan StreamChunk: 流式输出片段通道（无匹配时可能返回 nil）
 
 <a name="ChatType"></a>
-## type [ChatType](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L19>)
+## type ChatType
 
 ChatType 描述会话类型枚举。
 
@@ -190,7 +190,7 @@ const (
 ```
 
 <a name="Matcher"></a>
-## type [Matcher](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L5>)
+## type Matcher
 
 Matcher 定义路由匹配逻辑。 返回 true 表示该路由应该处理此首包快照。
 
@@ -199,7 +199,7 @@ type Matcher func(update RequestSnapshot) bool
 ```
 
 <a name="MatchAny"></a>
-### func [MatchAny](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L91>)
+### func MatchAny
 
 ```go
 func MatchAny() Matcher
@@ -210,7 +210,7 @@ MatchAny 返回一个总是匹配的 Matcher。 Returns:
 - Matcher: 永远返回 true 的匹配器
 
 <a name="MatchPrefix"></a>
-### func [MatchPrefix](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L82>)
+### func MatchPrefix
 
 ```go
 func MatchPrefix(prefix string) Matcher
@@ -225,7 +225,7 @@ Returns:
 - Matcher: 当前前缀匹配器
 
 <a name="PipelineContext"></a>
-## type [PipelineContext](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L18-L21>)
+## type PipelineContext
 
 PipelineContext 承载 Pipeline 执行所需的显式上下文。 Fields:
 
@@ -240,7 +240,7 @@ type PipelineContext struct {
 ```
 
 <a name="PipelineFunc"></a>
-## type [PipelineFunc](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L29>)
+## type PipelineFunc
 
 PipelineFunc 便于直接以函数充当 PipelineInvoker。
 
@@ -249,7 +249,7 @@ type PipelineFunc func(ctx PipelineContext) <-chan StreamChunk
 ```
 
 <a name="PipelineFunc.Trigger"></a>
-### func \(PipelineFunc\) [Trigger](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L32>)
+### func \(PipelineFunc\) Trigger
 
 ```go
 func (f PipelineFunc) Trigger(ctx PipelineContext) <-chan StreamChunk
@@ -258,7 +258,7 @@ func (f PipelineFunc) Trigger(ctx PipelineContext) <-chan StreamChunk
 Trigger 实现 PipelineInvoker 接口。
 
 <a name="PipelineInvoker"></a>
-## type [PipelineInvoker](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L24-L26>)
+## type PipelineInvoker
 
 PipelineInvoker 抽象命令/业务执行器。
 
@@ -269,7 +269,7 @@ type PipelineInvoker interface {
 ```
 
 <a name="Reference"></a>
-## type [Reference](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L54-L60>)
+## type Reference
 
 Reference 描述消息中的引用内容。
 
@@ -284,7 +284,7 @@ type Reference struct {
 ```
 
 <a name="Reference.SaveAttachments"></a>
-### func \(Reference\) [SaveAttachments](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L104>)
+### func \(Reference\) SaveAttachments
 
 ```go
 func (r Reference) SaveAttachments(dir string) ([]SavedAttachment, error)
@@ -300,7 +300,7 @@ Returns:
 - error: 只要有任意附件失败则返回非空错误
 
 <a name="RequestSnapshot"></a>
-## type [RequestSnapshot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L27-L39>)
+## type RequestSnapshot
 
 RequestSnapshot 描述首包请求的标准化快照。
 
@@ -321,7 +321,7 @@ type RequestSnapshot struct {
 ```
 
 <a name="RequestSnapshot.SaveAttachments"></a>
-### func \(RequestSnapshot\) [SaveAttachments](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L93>)
+### func \(RequestSnapshot\) SaveAttachments
 
 ```go
 func (r RequestSnapshot) SaveAttachments(dir string) ([]SavedAttachment, error)
@@ -337,7 +337,7 @@ Returns:
 - error: 只要有任意附件失败则返回非空错误
 
 <a name="Responser"></a>
-## type [Responser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/responser.go#L12-L16>)
+## type Responser
 
 Responser 定义主动发送能力的抽象接口。 Parameters:
 
@@ -359,7 +359,7 @@ type Responser interface {
 ```
 
 <a name="Route"></a>
-## type [Route](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/chain.go#L8-L12>)
+## type Route
 
 Route 定义单条路由规则。
 
@@ -372,7 +372,7 @@ type Route struct {
 ```
 
 <a name="SavedAttachment"></a>
-## type [SavedAttachment](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/request.go#L80-L84>)
+## type SavedAttachment
 
 SavedAttachment 表示附件保存结果。
 
@@ -385,7 +385,7 @@ type SavedAttachment struct {
 ```
 
 <a name="StreamChunk"></a>
-## type [StreamChunk](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/botcore/pipeline.go#L4-L8>)
+## type StreamChunk
 
 StreamChunk 描述流式输出片段。
 
