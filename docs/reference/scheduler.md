@@ -40,7 +40,7 @@ Package scheduler 提供定时任务调度功能。 支持 Cron 表达式、固�
 
 
 <a name="Config"></a>
-## type Config
+## type [Config](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L171-L178>)
 
 Config 调度器配置
 
@@ -56,7 +56,7 @@ type Config struct {
 ```
 
 <a name="DefaultConfig"></a>
-### func DefaultConfig
+### func [DefaultConfig](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L181>)
 
 ```go
 func DefaultConfig() Config
@@ -65,7 +65,7 @@ func DefaultConfig() Config
 DefaultConfig 返回默认配置
 
 <a name="ContextMode"></a>
-## type ContextMode
+## type [ContextMode](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L37>)
 
 ContextMode 上下文模式
 
@@ -85,7 +85,7 @@ const (
 ```
 
 <a name="CreateTaskRequest"></a>
-## type CreateTaskRequest
+## type [CreateTaskRequest](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L79-L89>)
 
 CreateTaskRequest 创建任务请求
 
@@ -104,7 +104,7 @@ type CreateTaskRequest struct {
 ```
 
 <a name="SQLiteScheduler"></a>
-## type SQLiteScheduler
+## type [SQLiteScheduler](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L18-L27>)
 
 SQLiteScheduler 基于 SQLite 的调度器实现
 
@@ -115,7 +115,7 @@ type SQLiteScheduler struct {
 ```
 
 <a name="SQLiteScheduler.Create"></a>
-### func \(\*SQLiteScheduler\) Create
+### func \(\*SQLiteScheduler\) [Create](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L111>)
 
 ```go
 func (s *SQLiteScheduler) Create(ctx context.Context, req CreateTaskRequest) (*Task, error)
@@ -124,7 +124,7 @@ func (s *SQLiteScheduler) Create(ctx context.Context, req CreateTaskRequest) (*T
 Create 创建新任务
 
 <a name="SQLiteScheduler.Delete"></a>
-### func \(\*SQLiteScheduler\) Delete
+### func \(\*SQLiteScheduler\) [Delete](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L261>)
 
 ```go
 func (s *SQLiteScheduler) Delete(ctx context.Context, taskID string) error
@@ -133,7 +133,7 @@ func (s *SQLiteScheduler) Delete(ctx context.Context, taskID string) error
 Delete 删除任务
 
 <a name="SQLiteScheduler.Get"></a>
-### func \(\*SQLiteScheduler\) Get
+### func \(\*SQLiteScheduler\) [Get](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L206>)
 
 ```go
 func (s *SQLiteScheduler) Get(ctx context.Context, taskID string) (*Task, error)
@@ -142,7 +142,7 @@ func (s *SQLiteScheduler) Get(ctx context.Context, taskID string) (*Task, error)
 Get 获取任务详情
 
 <a name="SQLiteScheduler.GetDueTasks"></a>
-### func \(\*SQLiteScheduler\) GetDueTasks
+### func \(\*SQLiteScheduler\) [GetDueTasks](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L358>)
 
 ```go
 func (s *SQLiteScheduler) GetDueTasks(ctx context.Context) ([]Task, error)
@@ -151,7 +151,7 @@ func (s *SQLiteScheduler) GetDueTasks(ctx context.Context) ([]Task, error)
 GetDueTasks 获取到期任务
 
 <a name="SQLiteScheduler.GetRunLogs"></a>
-### func \(\*SQLiteScheduler\) GetRunLogs
+### func \(\*SQLiteScheduler\) [GetRunLogs](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L386>)
 
 ```go
 func (s *SQLiteScheduler) GetRunLogs(ctx context.Context, taskID string, limit int) ([]TaskRunLog, error)
@@ -160,7 +160,7 @@ func (s *SQLiteScheduler) GetRunLogs(ctx context.Context, taskID string, limit i
 GetRunLogs 获取执行日志
 
 <a name="SQLiteScheduler.ListAll"></a>
-### func \(\*SQLiteScheduler\) ListAll
+### func \(\*SQLiteScheduler\) [ListAll](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L310>)
 
 ```go
 func (s *SQLiteScheduler) ListAll(ctx context.Context) ([]Task, error)
@@ -169,7 +169,7 @@ func (s *SQLiteScheduler) ListAll(ctx context.Context) ([]Task, error)
 ListAll 列出所有任务
 
 <a name="SQLiteScheduler.ListByGroup"></a>
-### func \(\*SQLiteScheduler\) ListByGroup
+### func \(\*SQLiteScheduler\) [ListByGroup](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L294>)
 
 ```go
 func (s *SQLiteScheduler) ListByGroup(ctx context.Context, groupID string) ([]Task, error)
@@ -178,7 +178,7 @@ func (s *SQLiteScheduler) ListByGroup(ctx context.Context, groupID string) ([]Ta
 ListByGroup 列出群组的所有任务
 
 <a name="SQLiteScheduler.LogRun"></a>
-### func \(\*SQLiteScheduler\) LogRun
+### func \(\*SQLiteScheduler\) [LogRun](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L377>)
 
 ```go
 func (s *SQLiteScheduler) LogRun(ctx context.Context, log TaskRunLog) error
@@ -187,7 +187,7 @@ func (s *SQLiteScheduler) LogRun(ctx context.Context, log TaskRunLog) error
 LogRun 记录执行日志
 
 <a name="SQLiteScheduler.OnDue"></a>
-### func \(\*SQLiteScheduler\) OnDue
+### func \(\*SQLiteScheduler\) [OnDue](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L462>)
 
 ```go
 func (s *SQLiteScheduler) OnDue(handler TaskHandler)
@@ -196,7 +196,7 @@ func (s *SQLiteScheduler) OnDue(handler TaskHandler)
 OnDue 注册到期任务回调
 
 <a name="SQLiteScheduler.Pause"></a>
-### func \(\*SQLiteScheduler\) Pause
+### func \(\*SQLiteScheduler\) [Pause](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L267>)
 
 ```go
 func (s *SQLiteScheduler) Pause(ctx context.Context, taskID string) error
@@ -205,7 +205,7 @@ func (s *SQLiteScheduler) Pause(ctx context.Context, taskID string) error
 Pause 暂停任务
 
 <a name="SQLiteScheduler.Resume"></a>
-### func \(\*SQLiteScheduler\) Resume
+### func \(\*SQLiteScheduler\) [Resume](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L275>)
 
 ```go
 func (s *SQLiteScheduler) Resume(ctx context.Context, taskID string) error
@@ -214,7 +214,7 @@ func (s *SQLiteScheduler) Resume(ctx context.Context, taskID string) error
 Resume 恢复任务
 
 <a name="SQLiteScheduler.Start"></a>
-### func \(\*SQLiteScheduler\) Start
+### func \(\*SQLiteScheduler\) [Start](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L469>)
 
 ```go
 func (s *SQLiteScheduler) Start(ctx context.Context) error
@@ -223,7 +223,7 @@ func (s *SQLiteScheduler) Start(ctx context.Context) error
 Start 启动调度循环
 
 <a name="SQLiteScheduler.Stop"></a>
-### func \(\*SQLiteScheduler\) Stop
+### func \(\*SQLiteScheduler\) [Stop](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L549>)
 
 ```go
 func (s *SQLiteScheduler) Stop() error
@@ -232,7 +232,7 @@ func (s *SQLiteScheduler) Stop() error
 Stop 停止调度器
 
 <a name="SQLiteScheduler.Update"></a>
-### func \(\*SQLiteScheduler\) Update
+### func \(\*SQLiteScheduler\) [Update](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L249>)
 
 ```go
 func (s *SQLiteScheduler) Update(ctx context.Context, taskID string, updates map[string]interface{}) error
@@ -241,7 +241,7 @@ func (s *SQLiteScheduler) Update(ctx context.Context, taskID string, updates map
 Update 更新任务
 
 <a name="SQLiteScheduler.UpdateAfterRun"></a>
-### func \(\*SQLiteScheduler\) UpdateAfterRun
+### func \(\*SQLiteScheduler\) [UpdateAfterRun](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L421>)
 
 ```go
 func (s *SQLiteScheduler) UpdateAfterRun(ctx context.Context, taskID string, result string, runErr error) error
@@ -250,7 +250,7 @@ func (s *SQLiteScheduler) UpdateAfterRun(ctx context.Context, taskID string, res
 UpdateAfterRun 执行后更新任务状态
 
 <a name="ScheduleType"></a>
-## type ScheduleType
+## type [ScheduleType](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L11>)
 
 ScheduleType 调度类型
 
@@ -272,7 +272,7 @@ const (
 ```
 
 <a name="Scheduler"></a>
-## type Scheduler
+## type [Scheduler](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L92-L165>)
 
 Scheduler 定时任务调度器接口
 
@@ -354,7 +354,7 @@ type Scheduler interface {
 ```
 
 <a name="New"></a>
-### func New
+### func [New](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/sqlite_scheduler.go#L32>)
 
 ```go
 func New(cfg Config) (Scheduler, error)
@@ -363,7 +363,7 @@ func New(cfg Config) (Scheduler, error)
 New 创建 SQLite 调度器实例 参数：cfg \- 调度器配置 返回：Scheduler 实现和可能的错误
 
 <a name="Task"></a>
-## type Task
+## type [Task](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L47-L65>)
 
 Task 定时任务
 
@@ -390,7 +390,7 @@ type Task struct {
 ```
 
 <a name="TaskHandler"></a>
-## type TaskHandler
+## type [TaskHandler](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L168>)
 
 TaskHandler 任务处理函数
 
@@ -399,7 +399,7 @@ type TaskHandler func(ctx context.Context, task Task) error
 ```
 
 <a name="TaskRunLog"></a>
-## type TaskRunLog
+## type [TaskRunLog](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L68-L76>)
 
 TaskRunLog 任务执行日志
 
@@ -416,7 +416,7 @@ type TaskRunLog struct {
 ```
 
 <a name="TaskStatus"></a>
-## type TaskStatus
+## type [TaskStatus](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/scheduler/scheduler.go#L23>)
 
 TaskStatus 任务状态
 

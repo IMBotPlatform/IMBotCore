@@ -31,7 +31,7 @@ Package callback 提供 AI Agent 回调接口。 允许 AI Agent 在执行过程
 
 
 <a name="ApprovalRequest"></a>
-## type ApprovalRequest
+## type [ApprovalRequest](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/callback.go#L60-L65>)
 
 ApprovalRequest 审批请求
 
@@ -45,7 +45,7 @@ type ApprovalRequest struct {
 ```
 
 <a name="ApprovalResponse"></a>
-## type ApprovalResponse
+## type [ApprovalResponse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/callback.go#L68-L72>)
 
 ApprovalResponse 审批响应
 
@@ -58,7 +58,7 @@ type ApprovalResponse struct {
 ```
 
 <a name="Callback"></a>
-## type Callback
+## type [Callback](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/callback.go#L14-L49>)
 
 Callback AI 回调接口 提供 Agent 执行过程中与主程序交互的能力。
 
@@ -102,7 +102,7 @@ type Callback interface {
 ```
 
 <a name="FSCallback"></a>
-## type FSCallback
+## type [FSCallback](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L17-L20>)
 
 FSCallback 基于文件系统 IPC 的回调实现 兼容 NanoClaw 的 IPC 模式，通过 JSON 文件进行进程间通信。
 
@@ -113,7 +113,7 @@ type FSCallback struct {
 ```
 
 <a name="NewFSCallback"></a>
-### func NewFSCallback
+### func [NewFSCallback](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L28>)
 
 ```go
 func NewFSCallback(ipcDir string, sched scheduler.Scheduler) *FSCallback
@@ -127,7 +127,7 @@ NewFSCallback 创建文件系统回调实例 参数：
 返回：Callback 实现
 
 <a name="FSCallback.CancelTask"></a>
-### func \(\*FSCallback\) CancelTask
+### func \(\*FSCallback\) [CancelTask](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L91>)
 
 ```go
 func (c *FSCallback) CancelTask(ctx context.Context, taskID string) error
@@ -136,7 +136,7 @@ func (c *FSCallback) CancelTask(ctx context.Context, taskID string) error
 CancelTask 取消任务
 
 <a name="FSCallback.ListTasks"></a>
-### func \(\*FSCallback\) ListTasks
+### func \(\*FSCallback\) [ListTasks](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L99>)
 
 ```go
 func (c *FSCallback) ListTasks(ctx context.Context, groupID string) ([]scheduler.Task, error)
@@ -145,7 +145,7 @@ func (c *FSCallback) ListTasks(ctx context.Context, groupID string) ([]scheduler
 ListTasks 列出群组的任务
 
 <a name="FSCallback.PauseTask"></a>
-### func \(\*FSCallback\) PauseTask
+### func \(\*FSCallback\) [PauseTask](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L75>)
 
 ```go
 func (c *FSCallback) PauseTask(ctx context.Context, taskID string) error
@@ -154,7 +154,7 @@ func (c *FSCallback) PauseTask(ctx context.Context, taskID string) error
 PauseTask 暂停任务
 
 <a name="FSCallback.ReadPendingApprovalRequests"></a>
-### func \(\*FSCallback\) ReadPendingApprovalRequests
+### func \(\*FSCallback\) [ReadPendingApprovalRequests](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L216>)
 
 ```go
 func (c *FSCallback) ReadPendingApprovalRequests(ctx context.Context) ([]IPCMessage, error)
@@ -163,7 +163,7 @@ func (c *FSCallback) ReadPendingApprovalRequests(ctx context.Context) ([]IPCMess
 ReadPendingApprovalRequests 读取待处理的审批请求 用于主程序轮询审批请求。 参数：ctx \- 上下文 返回：审批请求列表和可能的错误
 
 <a name="FSCallback.ReadPendingMessages"></a>
-### func \(\*FSCallback\) ReadPendingMessages
+### func \(\*FSCallback\) [ReadPendingMessages](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L178>)
 
 ```go
 func (c *FSCallback) ReadPendingMessages(ctx context.Context) ([]IPCMessage, error)
@@ -172,7 +172,7 @@ func (c *FSCallback) ReadPendingMessages(ctx context.Context) ([]IPCMessage, err
 ReadPendingMessages 读取并删除待处理的消息 用于主程序轮询 IPC 目录。 参数：ctx \- 上下文 返回：消息列表和可能的错误
 
 <a name="FSCallback.RequestApproval"></a>
-### func \(\*FSCallback\) RequestApproval
+### func \(\*FSCallback\) [RequestApproval](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L108>)
 
 ```go
 func (c *FSCallback) RequestApproval(ctx context.Context, req ApprovalRequest) (*ApprovalResponse, error)
@@ -181,7 +181,7 @@ func (c *FSCallback) RequestApproval(ctx context.Context, req ApprovalRequest) (
 RequestApproval 请求人工审批 写入审批请求文件，轮询等待审批响应。
 
 <a name="FSCallback.RespondToApproval"></a>
-### func \(\*FSCallback\) RespondToApproval
+### func \(\*FSCallback\) [RespondToApproval](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L263>)
 
 ```go
 func (c *FSCallback) RespondToApproval(ctx context.Context, approvalID string, approved bool, approvedBy, comment string) error
@@ -198,7 +198,7 @@ RespondToApproval 响应审批请求 参数：
 返回：可能的错误
 
 <a name="FSCallback.ResumeTask"></a>
-### func \(\*FSCallback\) ResumeTask
+### func \(\*FSCallback\) [ResumeTask](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L83>)
 
 ```go
 func (c *FSCallback) ResumeTask(ctx context.Context, taskID string) error
@@ -207,7 +207,7 @@ func (c *FSCallback) ResumeTask(ctx context.Context, taskID string) error
 ResumeTask 恢复任务
 
 <a name="FSCallback.ScheduleTask"></a>
-### func \(\*FSCallback\) ScheduleTask
+### func \(\*FSCallback\) [ScheduleTask](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L67>)
 
 ```go
 func (c *FSCallback) ScheduleTask(ctx context.Context, req scheduler.CreateTaskRequest) (*scheduler.Task, error)
@@ -216,7 +216,7 @@ func (c *FSCallback) ScheduleTask(ctx context.Context, req scheduler.CreateTaskR
 ScheduleTask 创建定时任务
 
 <a name="FSCallback.SendMessage"></a>
-### func \(\*FSCallback\) SendMessage
+### func \(\*FSCallback\) [SendMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/fs_callback.go#L41>)
 
 ```go
 func (c *FSCallback) SendMessage(ctx context.Context, req SendMessageRequest) error
@@ -225,7 +225,7 @@ func (c *FSCallback) SendMessage(ctx context.Context, req SendMessageRequest) er
 SendMessage 发送消息到指定会话
 
 <a name="IPCMessage"></a>
-## type IPCMessage
+## type [IPCMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/callback.go#L87-L101>)
 
 IPCMessage IPC 消息结构（用于文件系统 IPC）
 
@@ -248,7 +248,7 @@ type IPCMessage struct {
 ```
 
 <a name="MessageType"></a>
-## type MessageType
+## type [MessageType](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/callback.go#L75>)
 
 MessageType IPC 消息类型
 
@@ -270,7 +270,7 @@ const (
 ```
 
 <a name="SendMessageRequest"></a>
-## type SendMessageRequest
+## type [SendMessageRequest](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/callback/callback.go#L52-L57>)
 
 SendMessageRequest 发送消息请求
 

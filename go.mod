@@ -3,7 +3,7 @@ module github.com/IMBotPlatform/IMBotCore
 go 1.24.4
 
 require (
-	github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260206100111-245bcfd8343b
+	github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260328151642-5201d462c3ee
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
@@ -23,6 +23,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -46,5 +47,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
-
-replace github.com/IMBotPlatform/bot-protocol-wecom => ../bot-protocol-wecom
