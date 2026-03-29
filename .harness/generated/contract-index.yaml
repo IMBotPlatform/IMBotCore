@@ -1,34 +1,73 @@
 public_routes:
   - package: pkg/botcore
+    owner: pkg/botcore
+    surface: request snapshot / chain / pipeline abstractions
   - package: pkg/command
+    owner: pkg/command
+    surface: cobra-based command execution
   - package: pkg/platform/wecom
+    owner: pkg/platform/wecom/wecom.go
+    surface: WeCom bot adapter
   - package: pkg/scheduler
+    owner: pkg/scheduler/scheduler.go
+    surface: SQLite-backed scheduler
   - package: pkg/workspace
+    owner: pkg/workspace/workspace.go
+    surface: chat/session workspace
   - package: pkg/callback
+    owner: pkg/callback/fs_callback.go
+    surface: file-based IPC bridge
   - package: pkg/container
+    owner: pkg/container/runner.go
+    surface: container execution helpers
 
 events:
-  - StreamChunk
-  - RequestSnapshot
-  - Task
-  - ApprovalRequest
-  - ApprovalResponse
+  - name: RequestSnapshot
+    path: pkg/botcore/request.go
+  - name: StreamChunk
+    path: pkg/botcore/pipeline.go
+  - name: Task
+    path: pkg/scheduler/scheduler.go
+  - name: ApprovalRequest
+    path: pkg/callback/callback.go
+  - name: ApprovalResponse
+    path: pkg/callback/callback.go
 
 schemas:
-  - RequestSnapshot
-  - StreamChunk
-  - ExecutionContext
-  - Task
-  - WorkspaceInfo
-  - RunRequest
-  - RunResult
+  - name: RequestSnapshot
+    path: pkg/botcore/request.go
+  - name: StreamChunk
+    path: pkg/botcore/pipeline.go
+  - name: ExecutionContext
+    path: pkg/command/context.go
+  - name: Task
+    path: pkg/scheduler/scheduler.go
+  - name: Workspace
+    path: pkg/workspace/workspace.go
+  - name: WorkspaceInfo
+    path: pkg/workspace/workspace.go
+  - name: RunRequest
+    path: pkg/container/runner.go
+  - name: RunResult
+    path: pkg/container/runner.go
 
 sdk_facades:
-  - command.Manager
-  - scheduler.Scheduler
-  - workspace.Workspace
-  - callback.FSCallback
-  - platform/wecom.Bot
+  - symbol: botcore.NewChain
+    path: pkg/botcore/chain.go
+  - symbol: command.NewParser
+    path: pkg/command/parser.go
+  - symbol: command.NewManager
+    path: pkg/command/manager.go
+  - symbol: callback.NewFSCallback
+    path: pkg/callback/fs_callback.go
+  - symbol: workspace.New
+    path: pkg/workspace/fs_workspace.go
+  - symbol: wecom.NewBot
+    path: pkg/platform/wecom/wecom.go
+  - symbol: container.NewDockerRunner
+    path: pkg/container/docker.go
+  - symbol: container.NewMountValidator
+    path: pkg/container/security.go
 
 generated_mirrors:
   - docs/reference/index.md
@@ -39,4 +78,7 @@ generated_mirrors:
   - docs/reference/workspace.md
 
 downstream_consumers:
-  - wechataibot
+  - consumer: wechataibot
+    path: ../wechataibot/main.go
+  - consumer: wechataibot
+    path: ../wechataibot/internal/app/imbot.go

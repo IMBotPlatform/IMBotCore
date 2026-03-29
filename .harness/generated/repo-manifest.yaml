@@ -13,7 +13,9 @@ not_owns:
   - Claude CLI runtime implementation
 entrypoints:
   - pkg/botcore
+  - pkg/callback
   - pkg/command
+  - pkg/container
   - pkg/platform/wecom
   - pkg/scheduler
   - pkg/workspace
@@ -28,7 +30,12 @@ high_risk_areas:
   - pkg/scheduler
   - pkg/workspace
 read_first:
+  - AGENTS.md
   - README.md
   - docs/architecture/overview.md
+  - .harness/README.md
+  - .harness/generated/module-map.md
+  - .harness/generated/contract-index.yaml
+  - .harness/generated/validation-index.yaml
   - .harness/generated/api-index.md
 base_branch: main
