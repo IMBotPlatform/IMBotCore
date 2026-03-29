@@ -124,6 +124,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 	client := &http.Client{Timeout: clientTimeout}
 	results := make([]SavedAttachment, 0, len(attachments))
 	var hasError bool
+	errorDetails := make([]string, 0)
 
 	for i, att := range attachments {
 		result := SavedAttachment{Attachment: att}
@@ -132,6 +133,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 		if len(att.Data) == 0 && strings.TrimSpace(att.URL) == "" {
 			result.Err = errors.New("attachment has no data and no url")
 			results = append(results, result)
+			errorDetails = append(errorDetails, describeAttachmentError(att, result.Err))
 			hasError = true
 			continue
 		}
@@ -141,6 +143,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 		if err != nil {
 			result.Err = err
 			results = append(results, result)
+			errorDetails = append(errorDetails, describeAttachmentError(att, result.Err))
 			hasError = true
 			continue
 		}
@@ -154,6 +157,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 			if err != nil {
 				result.Err = err
 				results = append(results, result)
+				errorDetails = append(errorDetails, describeAttachmentError(att, result.Err))
 				hasError = true
 				continue
 			}
@@ -162,6 +166,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 				if err != nil {
 					result.Err = fmt.Errorf("transform attachment: %w", err)
 					results = append(results, result)
+					errorDetails = append(errorDetails, describeAttachmentError(att, result.Err))
 					hasError = true
 					continue
 				}
@@ -172,6 +177,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 		if err := os.WriteFile(targetPath, data, 0o644); err != nil {
 			result.Err = fmt.Errorf("write data: %w", err)
 			results = append(results, result)
+			errorDetails = append(errorDetails, describeAttachmentError(att, result.Err))
 			hasError = true
 			continue
 		}
@@ -181,9 +187,22 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 	}
 
 	if hasError {
-		return results, errors.New("save attachments: some downloads failed")
+		return results, fmt.Errorf("save attachments: some downloads failed: %s", strings.Join(errorDetails, "; "))
 	}
 	return results, nil
+}
+
+// describeAttachmentError 生成单个附件失败的可读摘要。
+func describeAttachmentError(att Attachment, err error) string {
+	kind := strings.TrimSpace(string(att.Type))
+	if kind == "" {
+		kind = "unknown"
+	}
+	url := strings.TrimSpace(att.URL)
+	if url == "" {
+		url = "no-url"
+	}
+	return fmt.Sprintf("type=%s url=%s err=%v", kind, truncateForLog(url, 160), err)
 }
 
 // resolveDurationFromEnv 读取环境变量中的超时配置。
@@ -219,6 +238,15 @@ func deriveAttachmentFileName(rawURL string, attType AttachmentType, index int) 
 	filename = strings.ReplaceAll(filename, "\\", "_")
 
 	return filename
+}
+
+// truncateForLog 截断日志里的长字段，避免签名 URL 过长。
+func truncateForLog(raw string, max int) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || max <= 0 || len(raw) <= max {
+		return raw
+	}
+	return raw[:max] + "...(truncated)"
 }
 
 // uniqueAttachmentPath 在目标目录内生成不冲突的文件路径。
