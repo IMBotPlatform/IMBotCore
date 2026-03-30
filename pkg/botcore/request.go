@@ -1,6 +1,7 @@
 package botcore
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -182,6 +183,19 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 			continue
 		}
 
+		// 关键步骤：对图片类型附件，当文件名缺少合法图片扩展名时，
+		// 通过 magic bytes 检测实际格式并重命名补上扩展名。
+		// 企业微信图片 URL 的 path 末段为纯数字 Media ID，无扩展名，
+		// 不补扩展名会导致 AI 工具（Claude、Z.ai 等）无法识别文件类型。
+		if att.Type == AttachmentTypeImage {
+			if ext := detectImageExt(data); ext != "" && !hasImageExt(targetPath) {
+				newPath := targetPath + ext
+				if renameErr := os.Rename(targetPath, newPath); renameErr == nil {
+					targetPath = newPath
+				}
+			}
+		}
+
 		result.Path = targetPath
 		results = append(results, result)
 	}
@@ -238,6 +252,46 @@ func deriveAttachmentFileName(rawURL string, attType AttachmentType, index int) 
 	filename = strings.ReplaceAll(filename, "\\", "_")
 
 	return filename
+}
+
+// detectImageExt 通过文件头 magic bytes 识别图片格式并返回对应扩展名。
+// 当格式无法识别时返回空字符串。
+// 参数：
+//   - data: 文件原始字节（只需前 12 字节即可识别）
+//
+// 返回：
+//   - string: 扩展名，如 ".png" / ".jpg" / ".gif" / ".webp"，或空字符串
+func detectImageExt(data []byte) string {
+	switch {
+	case len(data) >= 8 && bytes.Equal(data[:8], []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}):
+		return ".png"
+	case len(data) >= 3 && bytes.Equal(data[:3], []byte{0xff, 0xd8, 0xff}):
+		return ".jpg"
+	case len(data) >= 6 && (bytes.Equal(data[:6], []byte{0x47, 0x49, 0x46, 0x38, 0x37, 0x61}) ||
+		bytes.Equal(data[:6], []byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61})):
+		return ".gif"
+	case len(data) >= 12 &&
+		bytes.Equal(data[:4], []byte{0x52, 0x49, 0x46, 0x46}) &&
+		bytes.Equal(data[8:12], []byte{0x57, 0x45, 0x42, 0x50}):
+		return ".webp"
+	default:
+		return ""
+	}
+}
+
+// hasImageExt 判断路径是否已包含合法图片扩展名。
+// 参数：
+//   - p: 文件路径
+//
+// 返回：
+//   - bool: 路径扩展名是否为图片格式
+func hasImageExt(p string) bool {
+	ext := strings.ToLower(filepath.Ext(p))
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff", ".tif":
+		return true
+	}
+	return false
 }
 
 // truncateForLog 截断日志里的长字段，避免签名 URL 过长。
