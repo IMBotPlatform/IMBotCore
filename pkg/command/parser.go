@@ -2,6 +2,7 @@ package command
 
 import (
 	"strings"
+	"unicode"
 )
 
 // ParseResult 承载文本命令解析后的结构化结果。
@@ -48,6 +49,7 @@ func (p Parser) Parse(text string) ParseResult {
 		// 兼容 "/cmd@botname" 形式：@ 后是目标机器人标识，需剥离以保证命令匹配。
 		commandToken = commandToken[:idx]
 	}
+	commandToken = trimCommandToken(commandToken)
 	if commandToken == "" {
 		return ParseResult{Raw: text}
 	}
@@ -69,4 +71,10 @@ func (p Parser) Parse(text string) ParseResult {
 		Raw:         text,
 		ArgumentRaw: argumentRaw,
 	}
+}
+
+func trimCommandToken(token string) string {
+	return strings.TrimFunc(token, func(r rune) bool {
+		return unicode.Is(unicode.Cf, r) || unicode.IsControl(r)
+	})
 }
