@@ -5,7 +5,7 @@
 `IMBotCore` 是平台无关的 Bot Core 仓库。
 
 - owns: `botcore` 抽象、命令系统、调度器、会话工作空间、文件 IPC callback、WeCom 平台适配
-- not owns: 具体业务技能、产品部署、Claude CLI 的底层执行实现
+- not owns: 具体业务技能、产品部署、具体 Agent Runtime 的实现与产品选择策略
 
 ## Start Here
 
@@ -40,6 +40,7 @@
 ## Hard Constraints
 
 - 不把 `wechataibot` 这种产品仓库的业务细节拉进 core 包
+- `pkg/container` 必须保持 Runtime 中立；镜像、容器内工作/状态路径和环境变量白名单由调用方显式配置
 - 改动公开 API 后，同步关注 `docs/reference/` 的更新链
 - 改动 `pkg/platform/wecom/`、`pkg/command/`、`pkg/workspace/` 后，需要考虑 `wechataibot` 兼容性
 

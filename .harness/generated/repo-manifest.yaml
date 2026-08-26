@@ -10,7 +10,7 @@ owns:
 not_owns:
   - product-specific skills
   - GitLab deployment flow
-  - Claude CLI runtime implementation
+  - concrete Agent Runtime implementation or product selection policy
 entrypoints:
   - pkg/botcore
   - pkg/callback

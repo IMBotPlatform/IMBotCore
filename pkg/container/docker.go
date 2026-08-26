@@ -33,6 +33,13 @@ type DockerRunner struct {
 
 // NewDockerRunner 创建 Docker 执行器。
 func NewDockerRunner(cfg Config) (*DockerRunner, error) {
+	if strings.TrimSpace(cfg.Image) == "" {
+		return nil, fmt.Errorf("container image is required")
+	}
+	if strings.TrimSpace(cfg.WorkingDir) == "" {
+		return nil, fmt.Errorf("container working directory is required")
+	}
+
 	opts := []client.Opt{client.FromEnv, client.WithAPIVersionNegotiation()}
 	if cfg.DockerHost != "" {
 		opts = append(opts, client.WithHost(cfg.DockerHost))
@@ -41,10 +48,6 @@ func NewDockerRunner(cfg Config) (*DockerRunner, error) {
 	cli, err := client.NewClientWithOpts(opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create docker client: %w", err)
-	}
-
-	if cfg.Image == "" {
-		cfg.Image = DefaultConfig().Image
 	}
 
 	return &DockerRunner{
@@ -67,8 +70,11 @@ func (r *DockerRunner) Run(ctx context.Context, req RunRequest) (*RunResult, err
 		}
 	}
 
-	// 构建挂载配置
-	mounts := r.buildMounts(req)
+	// 构建挂载配置。容器内目标路径由具体 Runtime 显式提供。
+	mounts, err := r.buildMounts(req)
+	if err != nil {
+		return nil, err
+	}
 
 	// 过滤环境变量
 	env := r.filterEnvVars(req.EnvVars)
@@ -98,7 +104,7 @@ func (r *DockerRunner) Run(ctx context.Context, req RunRequest) (*RunResult, err
 		StdinOnce:    true,
 		Tty:          false,
 		Env:          env,
-		WorkingDir:   "/workspace/group",
+		WorkingDir:   r.config.WorkingDir,
 	}
 
 	hostConfig := &container.HostConfig{
@@ -201,55 +207,50 @@ func (r *DockerRunner) Run(ctx context.Context, req RunRequest) (*RunResult, err
 }
 
 // buildMounts 构建容器挂载配置。
-func (r *DockerRunner) buildMounts(req RunRequest) []mount.Mount {
+func (r *DockerRunner) buildMounts(req RunRequest) ([]mount.Mount, error) {
 	mounts := []mount.Mount{}
-
-	// 工作空间目录
-	if req.WorkspaceDir != "" {
+	addMount := func(hostPath, targetPath, label string, readOnly bool) error {
+		if hostPath == "" {
+			return nil
+		}
+		if strings.TrimSpace(targetPath) == "" {
+			return fmt.Errorf("%s mount path is required", label)
+		}
 		mounts = append(mounts, mount.Mount{
-			Type:   mount.TypeBind,
-			Source: req.WorkspaceDir,
-			Target: "/workspace/group",
+			Type:     mount.TypeBind,
+			Source:   hostPath,
+			Target:   targetPath,
+			ReadOnly: readOnly,
 		})
+		return nil
 	}
 
-	// Claude sessions 目录
-	if req.SessionsDir != "" {
-		mounts = append(mounts, mount.Mount{
-			Type:   mount.TypeBind,
-			Source: req.SessionsDir,
-			Target: "/home/node/.claude",
-		})
+	// 工作空间目录
+	if err := addMount(req.WorkspaceDir, r.config.WorkspaceMountPath, "workspace", false); err != nil {
+		return nil, err
+	}
+
+	// Agent Runtime session state 目录
+	if err := addMount(req.SessionsDir, r.config.StateMountPath, "runtime state", false); err != nil {
+		return nil, err
 	}
 
 	// IPC 目录
-	if req.IPCDir != "" {
-		mounts = append(mounts, mount.Mount{
-			Type:   mount.TypeBind,
-			Source: req.IPCDir,
-			Target: "/workspace/ipc",
-		})
+	if err := addMount(req.IPCDir, r.config.IPCMountPath, "IPC", false); err != nil {
+		return nil, err
 	}
 
 	// 全局记忆目录（只读）
-	if req.GlobalDir != "" {
-		mounts = append(mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   req.GlobalDir,
-			Target:   "/workspace/global",
-			ReadOnly: true,
-		})
+	if err := addMount(req.GlobalDir, r.config.GlobalMountPath, "global", true); err != nil {
+		return nil, err
 	}
 
-	return mounts
+	return mounts, nil
 }
 
 // filterEnvVars 过滤环境变量，只保留允许的变量。
 func (r *DockerRunner) filterEnvVars(envVars map[string]string) []string {
 	allowed := r.config.AllowedEnvVars
-	if len(allowed) == 0 {
-		allowed = DefaultConfig().AllowedEnvVars
-	}
 
 	allowedSet := make(map[string]bool)
 	for _, v := range allowed {

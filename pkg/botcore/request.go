@@ -186,7 +186,7 @@ func saveAttachments(attachments []Attachment, dir string) ([]SavedAttachment, e
 		// 关键步骤：对图片类型附件，当文件名缺少合法图片扩展名时，
 		// 通过 magic bytes 检测实际格式并重命名补上扩展名。
 		// 企业微信图片 URL 的 path 末段为纯数字 Media ID，无扩展名，
-		// 不补扩展名会导致 AI 工具（Claude、Z.ai 等）无法识别文件类型。
+		// 不补扩展名会导致部分 AI 工具无法识别文件类型。
 		if att.Type == AttachmentTypeImage {
 			if ext := detectImageExt(data); ext != "" && !hasImageExt(targetPath) {
 				newPath := targetPath + ext

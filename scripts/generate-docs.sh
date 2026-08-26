@@ -29,9 +29,17 @@ done
 
 mkdir -p "$OUT_DIR"
 
-if ! command -v gomarkdoc >/dev/null 2>&1; then
-	echo "gomarkdoc not found, installing ${GOMARKDOC_VERSION} ..." >&2
-	env -u GOROOT go install "github.com/princjef/gomarkdoc/cmd/gomarkdoc@${GOMARKDOC_VERSION}"
+GOMARKDOC_BIN="$(command -v gomarkdoc || true)"
+if [ -z "${GOMARKDOC_BIN}" ]; then
+	GOMARKDOC_BIN="$(env -u GOROOT go env GOPATH)/bin/gomarkdoc"
+	if [ ! -x "${GOMARKDOC_BIN}" ]; then
+		echo "gomarkdoc not found, installing ${GOMARKDOC_VERSION} ..." >&2
+		env -u GOROOT go install "github.com/princjef/gomarkdoc/cmd/gomarkdoc@${GOMARKDOC_VERSION}"
+	fi
+fi
+if [ ! -x "${GOMARKDOC_BIN}" ]; then
+	echo "gomarkdoc executable not found after install: ${GOMARKDOC_BIN}" >&2
+	exit 1
 fi
 
 MODULE_PATH="$(env -u GOROOT go list -m)"
@@ -67,7 +75,7 @@ while IFS= read -r pkg; do
 	file_name="${rel_no_pkg//\//-}.md"
 	out_file="${GEN_DIR}/${file_name}"
 
-	gomarkdoc "$pkg" -o "$out_file"
+	"${GOMARKDOC_BIN}" "$pkg" -o "$out_file"
 	echo "- [${rel_no_pkg}](${file_name})" >>"$index_file"
 done <<<"$packages"
 

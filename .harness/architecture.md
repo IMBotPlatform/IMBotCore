@@ -20,7 +20,7 @@ Observed fact:
 - `pkg/scheduler`: 任务模型、SQLite 调度器、到期任务回调
 - `pkg/workspace`: 会话级文件系统工作空间
 - `pkg/callback`: 基于文件系统的 IPC 回调桥
-- `pkg/container`: 容器运行与挂载校验
+- `pkg/container`: Runtime 中立的容器运行与挂载校验；不提供具体 Agent 镜像、状态路径或 Provider 环境变量默认值
 - `pkg/platform/wecom`: 基于 `bot-protocol-wecom` 的适配层
 
 ## Dependency Directions
@@ -62,6 +62,7 @@ WeCom SDK callback
 workspace: isolated filesystem per chat/session
 scheduler: SQLite-backed task loop
 callback: file-based IPC for messages / tasks / approvals
+container: explicit image / working directory / mount targets / environment allowlist
 ```
 
 ## High-Risk Areas
@@ -69,6 +70,7 @@ callback: file-based IPC for messages / tasks / approvals
 - 公开抽象改名或字段变更
 - 调度器任务语义变化
 - workspace 路径约束与清理策略变化
+- container 公共配置重新引入具体 Agent、镜像、状态目录或 Provider 凭证默认值
 - WeCom 适配层与上游 SDK 契约漂移
 
 ## Evidence

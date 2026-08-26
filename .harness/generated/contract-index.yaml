@@ -19,7 +19,7 @@ public_routes:
     surface: file-based IPC bridge
   - package: pkg/container
     owner: pkg/container/runner.go
-    surface: container execution helpers
+    surface: runtime-neutral container execution helpers with explicit image, mount targets, and environment allowlist
 
 events:
   - name: RequestSnapshot

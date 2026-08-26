@@ -9,7 +9,7 @@
 - `Scheduler`: SQLite-backed task scheduler
 - `Workspace`: chat/session scoped filesystem isolation
 - `FSCallback`: file-based IPC bridge
-- `DockerRunner` / `MountValidator`: container execution helpers
+- `DockerRunner` / `MountValidator`: Runtime 中立的 container execution helpers
 
 ## Main Flows
 
@@ -21,6 +21,7 @@
 
 - 文件路径和挂载安全策略不应放宽为任意路径
 - callback IPC 目录结构属于运行期约定
+- `DockerRunner` 不选择具体 Agent；镜像、工作目录、各挂载目标和环境变量白名单必须由调用方显式配置
 
 ## Evidence
 

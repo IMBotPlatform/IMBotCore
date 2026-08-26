@@ -7,8 +7,8 @@
 | `pkg/scheduler/` | public package | 任务模型、SQLite 调度器、回调机制 |
 | `pkg/workspace/` | public package | 会话级文件系统工作空间 |
 | `pkg/callback/` | public package | 文件系统 IPC callback |
-| `pkg/container/` | public package | 容器执行与挂载安全校验 |
+| `pkg/container/` | public package | Runtime 中立的容器执行与挂载安全校验；镜像、目标路径和环境变量白名单需显式配置 |
 | `pkg/platform/wecom/` | public package | 企业微信适配层 |
 | `docs/architecture/` | docs | 架构说明 |
 | `docs/reference/` | generated docs | 自动生成 API reference |
-| `examples/` | examples | WeCom + LLM 接入样例 |
+| `examples/` | examples | WeCom + OpenAI 接入样例 |

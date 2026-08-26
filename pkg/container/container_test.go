@@ -119,13 +119,51 @@ func TestSanitizePath(t *testing.T) {
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
-	if cfg.Image == "" {
-		t.Error("expected default image to be set")
+	if cfg.Image != "" || cfg.WorkingDir != "" || cfg.StateMountPath != "" {
+		t.Error("platform-neutral defaults must not select an image, working directory, or runtime state path")
 	}
 	if cfg.MemoryLimit == 0 {
 		t.Error("expected memory limit to be set")
 	}
-	if len(cfg.AllowedEnvVars) == 0 {
-		t.Error("expected allowed env vars to be set")
+	if len(cfg.AllowedEnvVars) != 0 {
+		t.Error("platform-neutral defaults must not allow provider credentials")
+	}
+}
+
+func TestNewDockerRunnerRequiresExplicitRuntimeConfiguration(t *testing.T) {
+	if _, err := NewDockerRunner(DefaultConfig()); err == nil {
+		t.Fatal("expected empty platform-neutral config to be rejected")
+	}
+}
+
+func TestBuildMountsUsesExplicitRuntimePaths(t *testing.T) {
+	runner := &DockerRunner{config: Config{
+		WorkspaceMountPath: "/runtime/workspace",
+		StateMountPath:     "/runtime/state",
+		IPCMountPath:       "/runtime/ipc",
+		GlobalMountPath:    "/runtime/global",
+	}}
+	mounts, err := runner.buildMounts(RunRequest{
+		WorkspaceDir: "/host/workspace",
+		SessionsDir:  "/host/state",
+		IPCDir:       "/host/ipc",
+		GlobalDir:    "/host/global",
+	})
+	if err != nil {
+		t.Fatalf("build mounts: %v", err)
+	}
+	if len(mounts) != 4 {
+		t.Fatalf("expected 4 mounts, got %d", len(mounts))
+	}
+	if mounts[0].Target != "/runtime/workspace" || mounts[1].Target != "/runtime/state" {
+		t.Fatalf("unexpected runtime mount targets: %#v", mounts)
+	}
+	if !mounts[3].ReadOnly {
+		t.Fatal("global mount must stay read-only")
+	}
+
+	runner.config.StateMountPath = ""
+	if _, err := runner.buildMounts(RunRequest{SessionsDir: "/host/state"}); err == nil {
+		t.Fatal("expected missing runtime state target to be rejected")
 	}
 }

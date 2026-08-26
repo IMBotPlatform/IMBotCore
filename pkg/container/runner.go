@@ -10,11 +10,11 @@ import (
 // RunRequest 容器执行请求。
 type RunRequest struct {
 	ChatID       string            // 会话 ID
-	SessionID    string            // Claude CLI session ID
+	SessionID    string            // Agent Runtime session ID
 	IsNewSession bool              // 是否新会话
 	Prompt       string            // 执行提示词
 	WorkspaceDir string            // 工作空间目录
-	SessionsDir  string            // Claude sessions 目录
+	SessionsDir  string            // Agent Runtime session state 目录
 	IPCDir       string            // IPC 通信目录
 	GlobalDir    string            // 全局记忆目录（只读）
 	EnvVars      map[string]string // 环境变量（已过滤）
@@ -51,29 +51,32 @@ type Runner interface {
 
 // Config 容器执行器配置。
 type Config struct {
-	Image          string        // 容器镜像名
-	MemoryLimit    int64         // 内存限制 (bytes)
-	CPUQuota       int64         // CPU 配额
-	NetworkMode    string        // 网络模式 (bridge/host/none)
-	DefaultTimeout time.Duration // 默认超时时间
-	MaxOutputSize  int           // 最大输出大小 (bytes)
-	AllowedEnvVars []string      // 允许的环境变量列表
-	DockerHost     string        // Docker API 地址（可选）
+	Image              string        // 容器镜像名，必须由调用方显式设置
+	WorkingDir         string        // 容器内工作目录，必须由调用方显式设置
+	WorkspaceMountPath string        // WorkspaceDir 的容器内挂载路径
+	StateMountPath     string        // SessionsDir 的容器内挂载路径
+	IPCMountPath       string        // IPCDir 的容器内挂载路径
+	GlobalMountPath    string        // GlobalDir 的容器内只读挂载路径
+	MemoryLimit        int64         // 内存限制 (bytes)
+	CPUQuota           int64         // CPU 配额
+	NetworkMode        string        // 网络模式 (bridge/host/none)
+	DefaultTimeout     time.Duration // 默认超时时间
+	MaxOutputSize      int           // 最大输出大小 (bytes)
+	AllowedEnvVars     []string      // 允许的环境变量列表；默认为空
+	DockerHost         string        // Docker API 地址（可选）
 }
 
-// DefaultConfig 返回默认配置。
+// DefaultConfig 返回平台中立的资源限制默认值。
+//
+// Image、WorkingDir、挂载目标和 AllowedEnvVars 不带任何 Agent Runtime
+// 默认值，必须由具体产品或 Runtime 适配器显式设置。
 func DefaultConfig() Config {
 	return Config{
-		Image:          "claude-code-agent:latest",
 		MemoryLimit:    512 * 1024 * 1024, // 512MB
 		CPUQuota:       100000,            // 1 CPU
 		NetworkMode:    "bridge",
 		DefaultTimeout: 5 * time.Minute,
 		MaxOutputSize:  1024 * 1024, // 1MB
-		AllowedEnvVars: []string{
-			"ANTHROPIC_API_KEY",
-			"CLAUDE_CODE_OAUTH_TOKEN",
-		},
 	}
 }
 
