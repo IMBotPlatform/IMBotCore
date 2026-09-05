@@ -9,6 +9,9 @@
 
 ## Start Here
 
+先按本文件的责任边界和源码地图选择入口；需要 Harness 导航时读 `.harness/README.md`。下列索引按任务选择：合同变化读 contract/api index，验证读 validation index，Harness 维护读 evolution policy；不要求逐个预读。
+
+
 1. `.harness/README.md`
 2. `.harness/generated/module-map.md`
 3. `.harness/generated/repo-manifest.yaml`
