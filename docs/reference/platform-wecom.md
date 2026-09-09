@@ -45,7 +45,7 @@ Package wecom 提供企业微信平台的 botcore 适配层。 通过 wecomproto
 
 
 <a name="BuildStreamReply"></a>
-## func [BuildStreamReply](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L86>)
+## func BuildStreamReply
 
 ```go
 func BuildStreamReply(streamID, content string, finish bool) wecomproto.StreamReply
@@ -54,7 +54,7 @@ func BuildStreamReply(streamID, content string, finish bool) wecomproto.StreamRe
 BuildStreamReply 构建流式回复（委托给 wecomproto）。
 
 <a name="CalcSignature"></a>
-## func [CalcSignature](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L81>)
+## func CalcSignature
 
 ```go
 func CalcSignature(token, timestamp, nonce, data string) string
@@ -63,7 +63,7 @@ func CalcSignature(token, timestamp, nonce, data string) string
 CalcSignature 计算签名（委托给 wecomproto）。
 
 <a name="NewCrypt"></a>
-## func [NewCrypt](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L76>)
+## func NewCrypt
 
 ```go
 func NewCrypt(token, encodingAESKey, corpID string) (*wecomproto.Crypt, error)
@@ -72,7 +72,7 @@ func NewCrypt(token, encodingAESKey, corpID string) (*wecomproto.Crypt, error)
 NewCrypt 创建加解密器（委托给 wecomproto）。
 
 <a name="Bot"></a>
-## type [Bot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L13-L15>)
+## type Bot
 
 Bot 是对 wecomproto.Bot 的包装，支持 botcore.PipelineInvoker。
 
@@ -83,7 +83,7 @@ type Bot struct {
 ```
 
 <a name="NewBot"></a>
-### func [NewBot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L48>)
+### func NewBot
 
 ```go
 func NewBot(token, encodingAESKey, corpID string, streamMsgTTL, streamWaitTimeout time.Duration, pipeline botcore.PipelineInvoker) (*Bot, error)
@@ -104,7 +104,7 @@ Returns:
 - error: 当加解密上下文初始化失败时返回错误
 
 <a name="Bot.Response"></a>
-### func \(\*Bot\) [Response](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L91>)
+### func \(\*Bot\) Response
 
 ```go
 func (b *Bot) Response(responseURL string, msg any) error
@@ -113,7 +113,7 @@ func (b *Bot) Response(responseURL string, msg any) error
 Response 实现 botcore.Responser 接口。
 
 <a name="Bot.ResponseMarkdown"></a>
-### func \(\*Bot\) [ResponseMarkdown](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L96>)
+### func \(\*Bot\) ResponseMarkdown
 
 ```go
 func (b *Bot) ResponseMarkdown(responseURL, content string) error
@@ -122,7 +122,7 @@ func (b *Bot) ResponseMarkdown(responseURL, content string) error
 ResponseMarkdown 实现 botcore.Responser 接口。
 
 <a name="Bot.ResponseTemplateCard"></a>
-### func \(\*Bot\) [ResponseTemplateCard](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L101>)
+### func \(\*Bot\) ResponseTemplateCard
 
 ```go
 func (b *Bot) ResponseTemplateCard(responseURL string, card any) error
@@ -131,7 +131,7 @@ func (b *Bot) ResponseTemplateCard(responseURL string, card any) error
 ResponseTemplateCard 实现 botcore.Responser 接口。
 
 <a name="BotResponser"></a>
-## type [BotResponser](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L72-L74>)
+## type BotResponser
 
 BotResponser 适配 wecomproto.Bot 为 botcore.Responser。
 
@@ -142,7 +142,7 @@ type BotResponser struct {
 ```
 
 <a name="BotResponser.Response"></a>
-### func \(\*BotResponser\) [Response](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L77>)
+### func \(\*BotResponser\) Response
 
 ```go
 func (r *BotResponser) Response(responseURL string, msg any) error
@@ -151,7 +151,7 @@ func (r *BotResponser) Response(responseURL string, msg any) error
 Response 实现 botcore.Responser 接口。
 
 <a name="BotResponser.ResponseMarkdown"></a>
-### func \(\*BotResponser\) [ResponseMarkdown](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L85>)
+### func \(\*BotResponser\) ResponseMarkdown
 
 ```go
 func (r *BotResponser) ResponseMarkdown(responseURL, content string) error
@@ -160,7 +160,7 @@ func (r *BotResponser) ResponseMarkdown(responseURL, content string) error
 ResponseMarkdown 实现 botcore.Responser 接口。
 
 <a name="BotResponser.ResponseTemplateCard"></a>
-### func \(\*BotResponser\) [ResponseTemplateCard](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L93>)
+### func \(\*BotResponser\) ResponseTemplateCard
 
 ```go
 func (r *BotResponser) ResponseTemplateCard(responseURL string, card any) error
@@ -169,7 +169,7 @@ func (r *BotResponser) ResponseTemplateCard(responseURL string, card any) error
 ResponseTemplateCard 实现 botcore.Responser 接口。
 
 <a name="EncryptedRequest"></a>
-## type [EncryptedRequest](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L66>)
+## type EncryptedRequest
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -178,7 +178,7 @@ type EncryptedRequest = wecomproto.EncryptedRequest
 ```
 
 <a name="EncryptedResponse"></a>
-## type [EncryptedResponse](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L67>)
+## type EncryptedResponse
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -187,7 +187,7 @@ type EncryptedResponse = wecomproto.EncryptedResponse
 ```
 
 <a name="LongConnBot"></a>
-## type [LongConnBot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L18>)
+## type LongConnBot
 
 LongConnBot adapts the same pipeline to WeCom's authenticated outbound WebSocket.
 
@@ -196,7 +196,7 @@ type LongConnBot struct{ *wecomproto.LongConnBot }
 ```
 
 <a name="NewLongConnBot"></a>
-### func [NewLongConnBot](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L21>)
+### func NewLongConnBot
 
 ```go
 func NewLongConnBot(botID, secret string, pipeline botcore.PipelineInvoker) (*LongConnBot, error)
@@ -205,7 +205,7 @@ func NewLongConnBot(botID, secret string, pipeline botcore.PipelineInvoker) (*Lo
 
 
 <a name="NewLongConnBotWithOptions"></a>
-### func [NewLongConnBotWithOptions](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L25>)
+### func NewLongConnBotWithOptions
 
 ```go
 func NewLongConnBotWithOptions(botID, secret string, pipeline botcore.PipelineInvoker, opts LongConnOptions) (*LongConnBot, error)
@@ -214,7 +214,7 @@ func NewLongConnBotWithOptions(botID, secret string, pipeline botcore.PipelineIn
 
 
 <a name="LongConnOptions"></a>
-## type [LongConnOptions](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L19>)
+## type LongConnOptions
 
 
 
@@ -223,7 +223,7 @@ type LongConnOptions = wecomproto.LongConnOptions
 ```
 
 <a name="MarkdownMessage"></a>
-## type [MarkdownMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L68>)
+## type MarkdownMessage
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -232,7 +232,7 @@ type MarkdownMessage = wecomproto.MarkdownMessage
 ```
 
 <a name="MarkdownPayload"></a>
-## type [MarkdownPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L69>)
+## type MarkdownPayload
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -241,7 +241,7 @@ type MarkdownPayload = wecomproto.MarkdownPayload
 ```
 
 <a name="Message"></a>
-## type [Message](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L63>)
+## type Message
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -250,7 +250,7 @@ type Message = wecomproto.Message
 ```
 
 <a name="MessageSender"></a>
-## type [MessageSender](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L64>)
+## type MessageSender
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -259,7 +259,7 @@ type MessageSender = wecomproto.MessageSender
 ```
 
 <a name="PipelineAdapter"></a>
-## type [PipelineAdapter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L14-L16>)
+## type PipelineAdapter
 
 PipelineAdapter 将 botcore.PipelineInvoker 适配为 wecomproto.Handler。
 
@@ -270,7 +270,7 @@ type PipelineAdapter struct {
 ```
 
 <a name="NewPipelineAdapter"></a>
-### func [NewPipelineAdapter](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L19>)
+### func NewPipelineAdapter
 
 ```go
 func NewPipelineAdapter(pipeline botcore.PipelineInvoker) *PipelineAdapter
@@ -279,7 +279,7 @@ func NewPipelineAdapter(pipeline botcore.PipelineInvoker) *PipelineAdapter
 NewPipelineAdapter 创建适配器。
 
 <a name="PipelineAdapter.Handle"></a>
-### func \(\*PipelineAdapter\) [Handle](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/adapter.go#L24>)
+### func \(\*PipelineAdapter\) Handle
 
 ```go
 func (a *PipelineAdapter) Handle(ctx wecomproto.Context) <-chan wecomproto.Chunk
@@ -288,7 +288,7 @@ func (a *PipelineAdapter) Handle(ctx wecomproto.Context) <-chan wecomproto.Chunk
 Handle 实现 wecomproto.Handler 接口。
 
 <a name="StartOptions"></a>
-## type [StartOptions](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L34>)
+## type StartOptions
 
 StartOptions 直接使用 wecomproto 的启动选项。
 
@@ -297,7 +297,7 @@ type StartOptions = wecomproto.StartOptions
 ```
 
 <a name="StreamPayload"></a>
-## type [StreamPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L72>)
+## type StreamPayload
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -306,7 +306,7 @@ type StreamPayload = wecomproto.StreamPayload
 ```
 
 <a name="TemplateCard"></a>
-## type [TemplateCard](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L65>)
+## type TemplateCard
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -315,7 +315,7 @@ type TemplateCard = wecomproto.TemplateCard
 ```
 
 <a name="TemplateCardMessage"></a>
-## type [TemplateCardMessage](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L70>)
+## type TemplateCardMessage
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
@@ -324,7 +324,7 @@ type TemplateCardMessage = wecomproto.TemplateCardMessage
 ```
 
 <a name="TextPayload"></a>
-## type [TextPayload](<https://github.com/IMBotPlatform/IMBotCore/blob/main/pkg/platform/wecom/wecom.go#L71>)
+## type TextPayload
 
 以下类型别名方便外部使用，避免直接导入 wecomproto
 
