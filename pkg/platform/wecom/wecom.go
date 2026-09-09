@@ -14,6 +14,22 @@ type Bot struct {
 	*wecomproto.Bot
 }
 
+// LongConnBot adapts the same pipeline to WeCom's authenticated outbound WebSocket.
+type LongConnBot struct{ *wecomproto.LongConnBot }
+type LongConnOptions = wecomproto.LongConnOptions
+
+func NewLongConnBot(botID, secret string, pipeline botcore.PipelineInvoker) (*LongConnBot, error) {
+	return NewLongConnBotWithOptions(botID, secret, pipeline, LongConnOptions{})
+}
+
+func NewLongConnBotWithOptions(botID, secret string, pipeline botcore.PipelineInvoker, opts LongConnOptions) (*LongConnBot, error) {
+	bot, err := wecomproto.NewLongConnBotWithOptions(botID, secret, NewPipelineAdapter(pipeline), opts)
+	if err != nil {
+		return nil, err
+	}
+	return &LongConnBot{bot}, nil
+}
+
 // StartOptions 直接使用 wecomproto 的启动选项。
 type StartOptions = wecomproto.StartOptions
 

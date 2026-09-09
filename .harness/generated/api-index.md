@@ -23,7 +23,8 @@
 - `Workspace`
 - `FSCallback`
 - `DockerRunner`
-- `Bot` in `pkg/platform/wecom`
+- `Bot` / `LongConnBot` / `LongConnOptions` in `pkg/platform/wecom`
+- `ConversationSender` in `pkg/botcore`
 
 ## Notable Exported Constructors / Helpers
 
@@ -37,5 +38,6 @@
 - `callback.NewFSCallback`
 - `container.NewDockerRunner`
 - `container.NewMountValidator`
+- `platform/wecom.NewLongConnBot` / `NewLongConnBotWithOptions`
 - `platform/wecom.NewBot`
 - `platform/wecom.NewPipelineAdapter`

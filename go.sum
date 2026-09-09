@@ -4,6 +4,8 @@ github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260328151642-5201d462c3ee
 github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260328151642-5201d462c3ee/go.mod h1:nlZfOALrXq12xQ0diQWpG76PmFWj7dzdCft426VKnOg=
 github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909065311-1225db5bc238 h1:X//8tZrdyIo4E8ARF1E7edJWcC2kTPue3cfYbkuFucM=
 github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909065311-1225db5bc238/go.mod h1:nlZfOALrXq12xQ0diQWpG76PmFWj7dzdCft426VKnOg=
+github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909074225-6fcf1a34a2ba h1:i/g9obldjrpCGx/QdTL3Yc4EXe3a96aPQ14YmvgVUt8=
+github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909074225-6fcf1a34a2ba/go.mod h1:nlZfOALrXq12xQ0diQWpG76PmFWj7dzdCft426VKnOg=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=

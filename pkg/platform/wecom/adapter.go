@@ -3,6 +3,7 @@
 package wecom
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/IMBotPlatform/IMBotCore/pkg/botcore"
@@ -29,7 +30,10 @@ func (a *PipelineAdapter) Handle(ctx wecomproto.Context) <-chan wecomproto.Chunk
 	snapshot := buildSnapshot(ctx)
 
 	// 创建 Responser 适配器
-	responser := &BotResponser{bot: ctx.Bot}
+	var responser botcore.Responser = &BotResponser{bot: ctx.Bot}
+	if ctx.LongConn != nil {
+		responser = newLongConnResponser(ctx)
+	}
 
 	pipelineCtx := botcore.PipelineContext{
 		Snapshot:  snapshot,
@@ -72,7 +76,7 @@ type BotResponser struct {
 // Response 实现 botcore.Responser 接口。
 func (r *BotResponser) Response(responseURL string, msg any) error {
 	if r.bot == nil {
-		return nil
+		return errors.New("wecom HTTP responder unavailable")
 	}
 	return r.bot.Response(responseURL, msg)
 }
@@ -80,7 +84,7 @@ func (r *BotResponser) Response(responseURL string, msg any) error {
 // ResponseMarkdown 实现 botcore.Responser 接口。
 func (r *BotResponser) ResponseMarkdown(responseURL, content string) error {
 	if r.bot == nil {
-		return nil
+		return errors.New("wecom HTTP responder unavailable")
 	}
 	return r.bot.ResponseMarkdown(responseURL, content)
 }
@@ -88,7 +92,7 @@ func (r *BotResponser) ResponseMarkdown(responseURL, content string) error {
 // ResponseTemplateCard 实现 botcore.Responser 接口。
 func (r *BotResponser) ResponseTemplateCard(responseURL string, card any) error {
 	if r.bot == nil {
-		return nil
+		return errors.New("wecom HTTP responder unavailable")
 	}
 	typedCard, ok := card.(*wecomproto.TemplateCard)
 	if !ok {
@@ -104,11 +108,22 @@ func buildSnapshot(ctx wecomproto.Context) botcore.RequestSnapshot {
 	if msg == nil {
 		return botcore.RequestSnapshot{ID: streamID}
 	}
+	if streamID == "" {
+		streamID = msg.MsgID
+	}
+	if streamID == "" {
+		streamID = ctx.RequestID
+	}
 
 	meta := map[string]string{
 		"platform":     "wecom",
 		"msgtype":      msg.MsgType,
 		"response_url": msg.ResponseURL,
+	}
+	if ctx.LongConn != nil {
+		meta["transport"] = "websocket"
+	} else {
+		meta["transport"] = "webhook"
 	}
 	if msg.Stream != nil {
 		meta["stream_id"] = msg.Stream.ID

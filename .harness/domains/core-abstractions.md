@@ -37,3 +37,7 @@
 - `pkg/botcore/pipeline.go`
 - `pkg/command/manager.go`
 - `pkg/command/context.go`
+
+## Transport-bound sending
+
+`botcore.ConversationSender` 是可选的目标已绑定发送接口。WeCom 长连接适配器以回调 userid/chatid 绑定目标，无需 `response_url`；HTTP Responser 合同保持。长连接与 HTTP 共用 Pipeline，流式 Replace 透传。入口 `pkg/platform/wecom/wecom.go`，快照/回复 `adapter.go`、`longconn.go`，验证 `longconn_test.go`。

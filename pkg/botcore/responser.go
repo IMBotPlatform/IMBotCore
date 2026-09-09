@@ -15,4 +15,10 @@ type Responser interface {
 	ResponseTemplateCard(responseURL string, card any) error
 }
 
+// ConversationSender is an optional proactive sender already bound to the
+// authenticated source conversation. It does not require a response URL.
+type ConversationSender interface {
+	SendMarkdown(content string) error
+}
+
 // 注意：Responser 仅定义能力抽象，具体注入请使用 (*Manager).WithResponser 方法。

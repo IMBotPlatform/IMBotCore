@@ -83,3 +83,12 @@ downstream_consumers:
     path: ../wechataibot/main.go
   - consumer: wechataibot
     path: ../wechataibot/internal/app/imbot.go
+
+longconn_adapter:
+  owner: pkg/platform/wecom/longconn.go
+  constructor: NewLongConnBotWithOptions
+  callback_identity: msgid_or_req_id
+  proactive_interface: botcore.ConversationSender
+  trusted_destination: single_userid_or_group_chatid
+  requires_response_url: false
+  validation: pkg/platform/wecom/longconn_test.go

@@ -96,3 +96,9 @@ scripts/generate-docs.sh --check  # 校验 docs/reference 是否最新
 ## License
 
 本项目采用 `GNU AGPL-3.0` 开源许可证，详见：`LICENSE`
+
+## 企业微信长连接
+
+`wecom.NewLongConnBot(botID, secret, pipeline)` 与 HTTP `NewBot` 复用相同 `PipelineInvoker`。调用 `Start(ctx)` 保持出站 WebSocket；`Ready()` 用于就绪检查，`Close()` 关闭连接。配置参数版本为 `NewLongConnBotWithOptions`。
+
+长连接快照以 msgid/req_id 提供稳定 ID，Metadata.transport 为 `websocket`。长连接 Responser 同时实现 `botcore.ConversationSender`，可直接 `SendMarkdown(text)`，无需 response_url；单聊固定发给回调的 userid，群聊固定发给 chatid。原 Responser 方法继续可用，但传入 URL 不会改变绑定目标。HTTP 模式缺少 Bot 时返回错误。
