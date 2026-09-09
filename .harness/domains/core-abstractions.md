@@ -28,6 +28,8 @@
 
 - 抽象应保持平台无关
 - 命令系统输出仍需落回统一 `StreamChunk`
+- `StreamChunk.Replace=true` 表示完整文本替换，默认仍为追加；不能同时携带 `Payload`。`pkg/platform/wecom/adapter.go` 透传该字段，依赖的 SDK 必须包含对应 `Chunk.Replace` 契约。
+- 交付前使用 `GOWORK=off go test -mod=mod ./...` 验证声明的模块版本；本机 vendor 或 workspace 替换不能证明独立 checkout 可编译。
 
 ## Evidence
 

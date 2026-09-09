@@ -2,6 +2,8 @@ github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260328151642-5201d462c3ee h1:vCZUut7RP7B7ti5XtLSioeLt0I/IYJHDovShM1AptGo=
 github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260328151642-5201d462c3ee/go.mod h1:nlZfOALrXq12xQ0diQWpG76PmFWj7dzdCft426VKnOg=
+github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909065311-1225db5bc238 h1:X//8tZrdyIo4E8ARF1E7edJWcC2kTPue3cfYbkuFucM=
+github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909065311-1225db5bc238/go.mod h1:nlZfOALrXq12xQ0diQWpG76PmFWj7dzdCft426VKnOg=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=

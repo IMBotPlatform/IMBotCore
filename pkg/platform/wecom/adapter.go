@@ -54,6 +54,7 @@ func (a *PipelineAdapter) Handle(ctx wecomproto.Context) <-chan wecomproto.Chunk
 			}
 			outCh <- wecomproto.Chunk{
 				Content: chunk.Content,
+				Replace: chunk.Replace,
 				Payload: chunk.Payload,
 				IsFinal: chunk.IsFinal,
 			}

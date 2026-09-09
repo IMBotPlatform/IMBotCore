@@ -2,6 +2,8 @@ package botcore
 
 // StreamChunk 描述流式输出片段。
 type StreamChunk struct {
+	// Replace replaces the entire text snapshot; false appends. Do not combine with Payload.
+	Replace bool
 	Content string
 	Payload any // 扩展：支持携带复杂对象（如 TemplateCard），用于非流式回复
 	IsFinal bool

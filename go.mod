@@ -3,7 +3,7 @@ module github.com/IMBotPlatform/IMBotCore
 go 1.24.4
 
 require (
-	github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260328151642-5201d462c3ee
+	github.com/IMBotPlatform/bot-protocol-wecom v0.0.2-0.20260909065311-1225db5bc238
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1

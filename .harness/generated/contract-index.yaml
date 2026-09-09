@@ -26,6 +26,7 @@ events:
     path: pkg/botcore/request.go
   - name: StreamChunk
     path: pkg/botcore/pipeline.go
+    semantics: Replace=true replaces the text snapshot; WeCom adapter preserves the flag; Payload is mutually exclusive
   - name: Task
     path: pkg/scheduler/scheduler.go
   - name: ApprovalRequest

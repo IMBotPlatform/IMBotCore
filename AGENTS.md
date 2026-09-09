@@ -43,6 +43,7 @@
 ## Hard Constraints
 
 - 不把 `wechataibot` 这种产品仓库的业务细节拉进 core 包
+- 流式 `Replace` 语义必须透传到平台 SDK；发布前核对 go.mod 中的 SDK 版本能够独立编译。
 - `pkg/container` 必须保持 Runtime 中立；镜像、容器内工作/状态路径和环境变量白名单由调用方显式配置
 - 改动公开 API 后，同步关注 `docs/reference/` 的更新链
 - 改动 `pkg/platform/wecom/`、`pkg/command/`、`pkg/workspace/` 后，需要考虑 `wechataibot` 兼容性

@@ -42,7 +42,7 @@ if [ ! -x "${GOMARKDOC_BIN}" ]; then
 	exit 1
 fi
 
-MODULE_PATH="$(env -u GOROOT go list -m)"
+MODULE_PATH="$(env -u GOROOT go list -f '{{.Module.Path}}' ./pkg/botcore)"
 
 # --check 模式：生成到临时目录后对比
 if [ "$CHECK_MODE" = true ]; then
